@@ -49,6 +49,16 @@ export function SkillEditor({
       )
     : available;
   const canAdd = rows.length < MAX_PROFILE_SKILLS && available.length > 0;
+  const initialKey = useMemo(
+    () =>
+      JSON.stringify(
+        initial
+          .filter((row) => catalogIds.has(row.skill_id))
+          .slice(0, MAX_PROFILE_SKILLS),
+      ),
+    [initial, catalogIds],
+  );
+  const dirty = JSON.stringify(rows) !== initialKey;
 
   function add(skillId: string) {
     if (
@@ -81,6 +91,7 @@ export function SkillEditor({
   return (
     <div className="space-y-4">
       <input type="hidden" name="skills" value={JSON.stringify(rows)} />
+      <input type="hidden" name="skills_dirty" value={dirty ? "1" : "0"} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-on-surface-variant" aria-live="polite">

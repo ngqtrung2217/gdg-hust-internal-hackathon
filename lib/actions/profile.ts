@@ -118,16 +118,20 @@ export async function updateProfileAction(
     };
   }
 
-  const { error: skillsError } = await supabase.rpc("set_profile_skills", {
-    p_skill_ids: skills.ids,
-    p_levels: skills.levels,
-  });
+  const skillsDirty = formData.get("skills_dirty") !== "0";
 
-  if (skillsError) {
-    return {
-      ok: false,
-      message: "Hồ sơ đã lưu nhưng kỹ năng chưa lưu được. Thử lại.",
-    };
+  if (skillsDirty) {
+    const { error: skillsError } = await supabase.rpc("set_profile_skills", {
+      p_skill_ids: skills.ids,
+      p_levels: skills.levels,
+    });
+
+    if (skillsError) {
+      return {
+        ok: false,
+        message: "Hồ sơ đã lưu nhưng kỹ năng chưa lưu được. Thử lại.",
+      };
+    }
   }
 
   revalidatePath("/profile");
