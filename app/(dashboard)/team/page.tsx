@@ -675,6 +675,11 @@ export default async function TeamPage({
                 <dt className="text-on-surface-variant">Đội trưởng</dt>
                 <dd className="text-right font-medium text-on-surface">
                   {leader?.full_name ?? "Chưa xác định"}
+                  {leader?.email ? (
+                    <span className="block text-xs font-normal text-on-surface-variant">
+                      {leader.email}
+                    </span>
+                  ) : null}
                 </dd>
               </div>
               <div className="flex justify-between gap-3">

@@ -35,7 +35,7 @@ type TeamRow = {
   created_at: string;
   leader: Pick<
     Profile,
-    "id" | "full_name" | "avatar_url" | "major" | "cohort"
+    "id" | "full_name" | "email" | "avatar_url" | "major" | "cohort"
   > | null;
   team_members: { user_id: string }[];
 };
@@ -95,7 +95,7 @@ export default async function TeamsPage({
       supabase
         .from("teams")
         .select(
-          "id, name, description, status, recruiting, max_members, leader_id, created_at, leader:profiles!teams_leader_id_fkey(id, full_name, avatar_url, major, cohort), team_members(user_id)",
+          "id, name, description, status, recruiting, max_members, leader_id, created_at, leader:profiles!teams_leader_id_fkey(id, full_name, email, avatar_url, major, cohort), team_members(user_id)",
         )
         .eq("status", "open")
         .eq("recruiting", true)
@@ -379,6 +379,11 @@ export default async function TeamsPage({
                         .filter(Boolean)
                         .join(" · ") || "Đội trưởng"}
                     </p>
+                    {team.leader?.email ? (
+                      <p className="truncate text-xs text-on-surface-variant">
+                        {team.leader.email}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
 

@@ -25,6 +25,8 @@ type InvitePreview = {
   max_members: number;
   expires_at: string;
   joinable: boolean;
+  leader_name: string | null;
+  leader_email: string | null;
 };
 
 export default async function JoinPage({
@@ -109,6 +111,22 @@ export default async function JoinPage({
                 </p>
               ) : null}
 
+              <div className="mt-3 border-t border-outline-variant pt-3">
+                <p className="text-sm text-on-surface">
+                  Đội trưởng:{" "}
+                  <span className="font-medium">
+                    {invite.leader_name ?? "Chưa cập nhật"}
+                  </span>
+                </p>
+                {invite.leader_email ? (
+                  <a
+                    href={`mailto:${invite.leader_email}`}
+                    className="mt-0.5 inline-block text-xs text-primary hover:underline"
+                  >
+                    {invite.leader_email}
+                  </a>
+                ) : null}
+              </div>
               <p className="mt-3 text-xs leading-5 text-on-surface-variant">
                 Link hết hạn {formatDateTime(invite.expires_at)}.
               </p>
