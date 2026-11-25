@@ -80,6 +80,14 @@ export async function updateProfileAction(
     .eq("id", profileId);
 
   if (error) {
+    if (error.message.includes("Cannot change department while in a team")) {
+      return {
+        ok: false,
+        message:
+          "Không thể đổi Ban/Mảng khi đang ở trong đội. Hãy rời đội trước.",
+      };
+    }
+
     if (error.message.includes("at most 3 developers")) {
       return {
         ok: false,
