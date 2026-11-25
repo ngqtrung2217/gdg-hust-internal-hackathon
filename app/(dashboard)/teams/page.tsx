@@ -10,6 +10,7 @@ import { requireUser } from "@/lib/auth/require-user";
 import {
   cancelJoinRequestAction,
   requestJoinTeamAction,
+  respondToInviteAction,
 } from "@/lib/actions/team";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +51,22 @@ type MyRequest = {
   team: { id: string; name: string } | null;
 };
 
+type PendingInvite = {
+  id: string;
+  team_id: string;
+  inviter_id: string;
+  message: string | null;
+  created_at: string;
+  team: {
+    id: string;
+    name: string;
+    max_members: number;
+    status: TeamStatus;
+    recruiting: boolean;
+  } | null;
+  inviter: { full_name: string; avatar_url: string | null } | null;
+};
+
 const requestStatusMeta: Record<
   string,
   { label: string; tone: "warning" | "success" | "error" | "neutral" }
@@ -73,6 +90,7 @@ export default async function TeamsPage({
     { data: memberships },
     { data: myRequests },
     { data: ownProfiles },
+    { data: pendingInvites },
   ] = await Promise.all([
       supabase
         .from("teams")
@@ -103,6 +121,15 @@ export default async function TeamsPage({
         .eq("id", profileId)
         .limit(1)
         .returns<Pick<Profile, "department" | "subteam">[]>(),
+      supabase
+        .from("team_invites")
+        .select(
+          "id, team_id, inviter_id, message, created_at, team:teams(id, name, max_members, status, recruiting), inviter:profiles!team_invites_inviter_id_fkey(full_name, avatar_url)",
+        )
+        .eq("invitee_id", profileId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .returns<PendingInvite[]>(),
     ]);
 
   const membership = memberships?.[0];
@@ -148,6 +175,80 @@ export default async function TeamsPage({
             Cập nhật hồ sơ
           </Link>
         </div>
+      ) : null}
+
+      {!membership && pendingInvites && pendingInvites.length > 0 ? (
+        <Card className="p-5">
+          <h2 className="text-base font-medium text-on-surface">
+            Lời mời vào đội
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-on-surface-variant">
+            Chấp nhận một lời mời để vào đội. Bạn chỉ có thể ở một đội.
+          </p>
+          <ul className="mt-3 space-y-4">
+            {pendingInvites.map((invite) => {
+              const open =
+                invite.team?.status === "open" && invite.team.recruiting;
+              return (
+                <li
+                  key={invite.id}
+                  className="rounded-xl border border-outline-variant p-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <Avatar
+                      src={invite.inviter?.avatar_url}
+                      name={invite.inviter?.full_name}
+                      size={36}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium text-on-surface">
+                          {invite.team?.name ?? "Đội"}
+                        </p>
+                        {!open ? (
+                          <Badge tone="warning">Đội đã đủ hoặc tạm dừng</Badge>
+                        ) : null}
+                      </div>
+                      <p className="mt-0.5 text-xs text-on-surface-variant">
+                        Mời bởi {invite.inviter?.full_name ?? "đội trưởng"} ·{" "}
+                        {formatDateTime(invite.created_at)}
+                      </p>
+                      {invite.message ? (
+                        <p className="mt-2 rounded-lg bg-surface-container px-3 py-2 text-sm leading-6 text-on-surface-variant">
+                          {invite.message}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <form action={respondToInviteAction}>
+                      <input type="hidden" name="invite_id" value={invite.id} />
+                      <input type="hidden" name="accept" value="true" />
+                      <SubmitButton
+                        size="sm"
+                        disabled={!open || !profileReady}
+                        pendingText="Đang tham gia…"
+                      >
+                        Chấp nhận
+                      </SubmitButton>
+                    </form>
+                    <form action={respondToInviteAction}>
+                      <input type="hidden" name="invite_id" value={invite.id} />
+                      <input type="hidden" name="accept" value="false" />
+                      <SubmitButton
+                        size="sm"
+                        variant="outline"
+                        pendingText="Đang từ chối…"
+                      >
+                        Từ chối
+                      </SubmitButton>
+                    </form>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
       ) : null}
 
       {params.ok ? (

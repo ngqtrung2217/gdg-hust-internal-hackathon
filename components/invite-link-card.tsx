@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { Link2 } from "lucide-react";
 import {
   createInviteLinkAction,
@@ -32,6 +32,26 @@ export function InviteLinkCard({
   useActionToast(state);
   const full = remainingSlots < 1;
   const paused = !recruiting;
+  const [copyState, setCopyState] = useState<{
+    url: string;
+    status: "copied" | "failed";
+  } | null>(null);
+  const copiedUrl = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!state.url || copiedUrl.current === state.url) return;
+
+    const url = state.url;
+    copiedUrl.current = url;
+
+    const copy = navigator.clipboard
+      ? navigator.clipboard.writeText(url)
+      : Promise.reject(new Error("Clipboard unavailable"));
+
+    copy
+      .then(() => setCopyState({ url, status: "copied" }))
+      .catch(() => setCopyState({ url, status: "failed" }));
+  }, [state.url]);
 
   return (
     <Card className="p-5">
@@ -102,6 +122,13 @@ export function InviteLinkCard({
             Hiệu lực đến {formatDateTime(state.expiresAt)}
             {state.maxUses ? ` · tối đa ${state.maxUses} lượt dùng` : ""}.
           </p>
+          {copyState?.url === state.url && copyState.status === "copied" ? (
+            <p className="mt-1 text-xs text-success">Đã tự động copy link.</p>
+          ) : copyState?.url === state.url && copyState.status === "failed" ? (
+            <p className="mt-1 text-xs text-error">
+              Chưa copy được, bấm Sao chép.
+            </p>
+          ) : null}
         </div>
       ) : null}
 
