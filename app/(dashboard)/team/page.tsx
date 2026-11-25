@@ -270,7 +270,6 @@ export default async function TeamPage({
 
         <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
           <CreateTeamForm
-            maxAllowed={Math.min(5, settings?.max_team_size ?? 5)}
             disabled={teamLocked || !profileReady}
             disabledReason={
               !profileReady

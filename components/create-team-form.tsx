@@ -14,11 +14,9 @@ import { Field, Input, Textarea } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 export function CreateTeamForm({
-  maxAllowed,
   disabled,
   disabledReason,
 }: {
-  maxAllowed: number;
   disabled?: boolean;
   disabledReason?: string;
 }) {
@@ -94,11 +92,6 @@ export function CreateTeamForm({
             disabled={disabled}
           />
         </Field>
-
-        <p className="rounded-xl bg-surface-container px-3 py-2 text-xs leading-5 text-on-surface-variant">
-          Đội tối đa {maxAllowed} người, do BTC cấu hình. Bạn không cần chọn số
-          lượng thành viên.
-        </p>
 
         <SubmitButton
           className="w-full"
