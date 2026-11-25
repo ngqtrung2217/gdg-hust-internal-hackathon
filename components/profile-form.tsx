@@ -1,17 +1,17 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { CheckCircle2, ShieldCheck } from "lucide-react";
 import { updateProfileAction } from "@/lib/actions/profile";
 import { initialActionState } from "@/lib/actions/types";
 import { useActionToast } from "@/lib/hooks/use-action-toast";
-import { ROLE_OPTIONS } from "@/lib/constants";
-import type { Profile, Skill } from "@/types/db";
+import { DEPARTMENT_OPTIONS } from "@/lib/constants";
+import type { Department, Profile, Skill, Subteam } from "@/types/db";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Field, Input, Textarea } from "@/components/ui/input";
+import { Field, Input, Select, Textarea } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { SkillEditor } from "@/components/skill-editor";
 
@@ -30,6 +30,21 @@ export function ProfileForm({
   );
   useActionToast(state);
 
+  const [department, setDepartment] = useState<Department | "">(
+    profile.department ?? "",
+  );
+  const [subteam, setSubteam] = useState<Subteam | "">(profile.subteam ?? "");
+
+  const selectedDepartment = DEPARTMENT_OPTIONS.find(
+    (option) => option.value === department,
+  );
+  const departmentLabel = DEPARTMENT_OPTIONS.find(
+    (option) => option.value === profile.department,
+  )?.label;
+  const subteamLabel = DEPARTMENT_OPTIONS.find(
+    (option) => option.value === profile.department,
+  )?.areas.find((area) => area.value === profile.subteam)?.label;
+
   const completeness = Math.round(
     ([
       profile.full_name,
@@ -39,12 +54,22 @@ export function ProfileForm({
       profile.headline,
       profile.bio,
       initialSkills.length > 0,
-      profile.preferred_roles.length > 0,
+      profile.department && profile.subteam,
       profile.facebook_url || profile.github_url,
     ].filter(Boolean).length /
       9) *
       100,
   );
+
+  function changeDepartment(value: Department | "") {
+    setDepartment(value);
+
+    const areas =
+      DEPARTMENT_OPTIONS.find((option) => option.value === value)?.areas ?? [];
+    if (!areas.some((area) => area.value === subteam)) {
+      setSubteam("");
+    }
+  }
 
   return (
     <form action={formAction} className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -130,7 +155,64 @@ export function ProfileForm({
                 placeholder="Khoa học máy tính"
               />
             </Field>
+
+            <Field
+              label="Ban"
+              htmlFor="department"
+              hint="Ban của bạn trong GDG-HUST."
+              error={state.fieldErrors?.department}
+            >
+              <Select
+                id="department"
+                name="department"
+                value={department}
+                onChange={(event) =>
+                  changeDepartment(event.target.value as Department | "")
+                }
+                required
+              >
+                <option value="" disabled>
+                  Chọn ban
+                </option>
+                {DEPARTMENT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
+            <Field
+              label="Mảng"
+              htmlFor="subteam"
+              hint={department ? undefined : "Chọn ban trước."}
+              error={state.fieldErrors?.subteam}
+            >
+              <Select
+                id="subteam"
+                name="subteam"
+                value={subteam}
+                onChange={(event) =>
+                  setSubteam(event.target.value as Subteam | "")
+                }
+                disabled={!department}
+                required
+              >
+                <option value="" disabled>
+                  Chọn mảng
+                </option>
+                {(selectedDepartment?.areas ?? []).map((area) => (
+                  <option key={area.value} value={area.value}>
+                    {area.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
           </div>
+
+          <p className="mt-4 rounded-lg bg-surface-container px-3 py-2 text-xs leading-5 text-on-surface-variant">
+            Đội gồm 3–5 người, tối đa 3 Developer và 1–2 Marcom/Operation.
+          </p>
         </Card>
 
         <Card className="p-6">
@@ -233,32 +315,6 @@ export function ProfileForm({
             <SkillEditor catalog={catalog} initial={initialSkills} />
           </div>
 
-          <div className="mt-6">
-            <p className="text-sm font-medium text-on-surface">Role mong muốn</p>
-            <p className="mt-1 text-xs text-on-surface-variant">
-              Chọn tối đa 3. Dùng để đội khác biết bạn phù hợp ở đâu.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {ROLE_OPTIONS.map((role) => (
-                <label
-                  key={role.value}
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary-container has-[:checked]:text-on-primary-container"
-                >
-                  <input
-                    type="checkbox"
-                    name="preferred_roles"
-                    value={role.value}
-                    defaultChecked={profile.preferred_roles.includes(
-                      role.value,
-                    )}
-                    className="h-4 w-4 rounded border-outline text-primary focus:ring-primary"
-                  />
-                  {role.label}
-                </label>
-              ))}
-            </div>
-          </div>
-
           <label className="mt-6 flex cursor-pointer items-start gap-3 rounded-xl border border-outline-variant p-4">
             <input
               type="checkbox"
@@ -301,6 +357,10 @@ export function ProfileForm({
               {profile.role === "admin" ? "BTC / Admin" : "Thí sinh"}
             </Badge>
             {profile.cohort ? <Badge>{profile.cohort}</Badge> : null}
+            {departmentLabel ? (
+              <Badge tone="primary">{departmentLabel}</Badge>
+            ) : null}
+            {subteamLabel ? <Badge>{subteamLabel}</Badge> : null}
           </div>
 
           <div className="mt-6">

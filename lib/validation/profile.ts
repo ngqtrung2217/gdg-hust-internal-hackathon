@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { ROLE_OPTIONS, MAX_PROFILE_SKILLS } from "@/lib/constants";
+import { DEPARTMENT_OPTIONS, MAX_PROFILE_SKILLS } from "@/lib/constants";
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-const ROLE_VALUES = ROLE_OPTIONS.map((option) => option.value) as [
-  string,
-  ...string[],
-];
+const DEPARTMENT_VALUES = DEPARTMENT_OPTIONS.map((option) => option.value);
+const SUBTEAM_VALUES = DEPARTMENT_OPTIONS.flatMap((option) =>
+  option.areas.map((area) => area.value),
+);
 
 const httpsUrl = z
   .string()
@@ -50,7 +50,34 @@ export const profileSchema = z.object({
   facebook_url: httpsUrl,
   github_url: httpsUrl,
   open_to_invites: z.boolean(),
-  preferred_roles: z.array(z.enum(ROLE_VALUES)).max(3, "Chọn tối đa 3 role"),
+  department: z
+    .string()
+    .trim()
+    .min(1, "Chọn ban")
+    .refine(
+      (value) => DEPARTMENT_VALUES.some((item) => item === value),
+      "Ban không hợp lệ",
+    ),
+  subteam: z
+    .string()
+    .trim()
+    .min(1, "Chọn mảng")
+    .refine(
+      (value) => SUBTEAM_VALUES.some((item) => item === value),
+      "Mảng không hợp lệ",
+    ),
+}).superRefine((data, ctx) => {
+  const department = DEPARTMENT_OPTIONS.find(
+    (option) => option.value === data.department,
+  );
+
+  if (!department?.areas.some((area) => area.value === data.subteam)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["subteam"],
+      message: "Mảng không thuộc ban đã chọn",
+    });
+  }
 });
 
 export type ProfileInput = z.infer<typeof profileSchema>;

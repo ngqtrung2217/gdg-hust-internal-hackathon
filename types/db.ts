@@ -43,6 +43,8 @@ export interface Profile {
   headline: string | null;
   bio: string | null;
   preferred_roles: PreferredRole[];
+  department: Department | null;
+  subteam: Subteam | null;
   facebook_url: string | null;
   github_url: string | null;
   open_to_invites: boolean;
@@ -76,7 +78,15 @@ export interface TeamMember {
   joined_at: string;
   profile?: Pick<
     Profile,
-    "id" | "full_name" | "email" | "avatar_url" | "major" | "cohort" | "headline"
+    | "id"
+    | "full_name"
+    | "email"
+    | "avatar_url"
+    | "major"
+    | "cohort"
+    | "headline"
+    | "department"
+    | "subteam"
   > | null;
 }
 
@@ -88,6 +98,7 @@ export interface Team {
   leader_id: string;
   max_members: number;
   status: TeamStatus;
+  recruiting: boolean;
   invite_code: string;
   created_at: string;
   updated_at: string;
@@ -105,7 +116,15 @@ export interface JoinRequest {
   decided_at: string | null;
   profile?: Pick<
     Profile,
-    "id" | "full_name" | "email" | "avatar_url" | "major" | "cohort" | "headline"
+    | "id"
+    | "full_name"
+    | "email"
+    | "avatar_url"
+    | "major"
+    | "cohort"
+    | "headline"
+    | "department"
+    | "subteam"
   > | null;
 }
 

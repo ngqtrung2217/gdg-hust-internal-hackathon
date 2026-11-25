@@ -15,6 +15,7 @@ import {
 import { requireAdmin } from "@/lib/auth/require-admin";
 import {
   adminRemoveMemberAction,
+  adminSetRecruitingAction,
   adminTransferLeaderAction,
   approveAccessRequestAction,
   deleteAnnouncementAction,
@@ -33,7 +34,6 @@ import { Card } from "@/components/ui/card";
 import { Select } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FlashToast } from "@/components/flash-toast";
-import { TEAM_STATUS_LABEL } from "@/lib/constants";
 import { formatDateTime } from "@/lib/utils/date";
 import type {
   AllowlistRow,
@@ -48,6 +48,7 @@ type AdminTeam = {
   id: string;
   name: string;
   status: TeamStatus;
+  recruiting: boolean;
   max_members: number;
   created_at: string;
   leader_id: string;
@@ -130,7 +131,7 @@ export default async function AdminPage({
     supabase
       .from("teams")
       .select(
-        "id, name, status, max_members, created_at, leader_id, leader:profiles!teams_leader_id_fkey(full_name), team_members(user_id, role, profile:profiles(full_name))",
+        "id, name, status, recruiting, max_members, created_at, leader_id, leader:profiles!teams_leader_id_fkey(full_name), team_members(user_id, role, profile:profiles(full_name))",
       )
       .order("created_at", { ascending: false })
       .limit(100)
@@ -764,16 +765,48 @@ export default async function AdminPage({
                             tone={
                               team.status === "locked"
                                 ? "error"
-                                : team.status === "full"
-                                  ? "success"
-                                  : "primary"
+                                : team.status === "archived"
+                                  ? "neutral"
+                                  : team.status === "full"
+                                    ? "success"
+                                    : !team.recruiting
+                                      ? "warning"
+                                      : "primary"
                             }
                           >
-                            {TEAM_STATUS_LABEL[team.status]}
+                            {team.status === "locked"
+                              ? "Đã khóa"
+                              : team.status === "archived"
+                                ? "Lưu trữ"
+                                : team.status === "full"
+                                  ? "Đã đủ"
+                                  : !team.recruiting
+                                    ? "Tạm dừng"
+                                    : "Đang tuyển"}
                           </Badge>
                         </td>
                         <td className="px-5 py-3">
                           <div className="flex flex-col items-end gap-2">
+                            <form action={adminSetRecruitingAction}>
+                              <input type="hidden" name="team_id" value={team.id} />
+                              <input
+                                type="hidden"
+                                name="recruiting"
+                                value={String(!team.recruiting)}
+                              />
+                              <SubmitButton
+                                size="sm"
+                                variant="outline"
+                                pendingText="Đang lưu…"
+                                disabled={
+                                  team.status === "locked" ||
+                                  team.status === "archived" ||
+                                  (!team.recruiting && team.status === "full")
+                                }
+                              >
+                                {team.recruiting ? "Tạm dừng tuyển" : "Mở tuyển"}
+                              </SubmitButton>
+                            </form>
                             <form action={setTeamLockedAction}>
                               <input type="hidden" name="team_id" value={team.id} />
                               <input

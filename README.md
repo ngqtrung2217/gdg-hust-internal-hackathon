@@ -70,7 +70,8 @@ Website không mở đăng ký công khai. BTC kiểm soát danh sách truy cậ
 | `major` | text | Ngành học |
 | `cohort` | text | Khóa, vd `K70`, `K71` |
 | `facebook_url`, `github_url` | text | Tuỳ chọn, URL `https://` hợp lệ |
-| `preferred_roles` | text[] | Frontend, Backend, AI/ML, Data, Design, PM, DevOps… |
+| `department` | text | `developer`, `marcom`, `operation` |
+| `subteam` | text | Dev: Data & AI / Web / Mobile · Marcom: Content / Design / Photo · Operation: Event / Human Resources / Partnership |
 | `open_to_invites` | boolean | Bật/tắt nhận lời mời |
 | `avatar_url` | text | Lấy từ Google, **chỉ đọc**, không cho đổi |
 | `skills` | `profile_skills` | **Tối đa 5** kỹ năng, chọn từ `skill_catalog`, mỗi kỹ năng có mức 1–5 |
@@ -164,7 +165,8 @@ erDiagram
         text avatar_url
         text headline
         text bio
-        text[] preferred_roles
+        text department
+        text subteam
         text facebook_url
         text github_url
         boolean open_to_invites

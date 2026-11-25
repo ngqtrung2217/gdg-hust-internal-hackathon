@@ -185,8 +185,9 @@ field.
 | About | `headline`, `bio` | `headline` ≤ 120 chars; `bio` ≤ 600 chars |
 | Contact | `contact_email`, `facebook_url`, `github_url` | Optional; URLs must be `https://`; reject non-http(s) schemes; each field ≤ 300 chars |
 | Skills | `profile_skills` join rows | **Max 5** per profile; `skill_id` must reference an `active` row in `skill_catalog`; `level` integer 1–5; unique `(profile_id, skill_id)` |
-| Roles | `preferred_roles text[]` | Allowlist: `frontend`, `backend`, `mobile`, `ai-ml`, `data`, `design`, `product`, `devops`, `other`; max 3 |
+| Department | `department`, `subteam` | `developer` (`data-ai`, `web`, `mobile`), `marcom` (`content`, `design`, `photo`), `operation` (`event`, `human-resources`, `partnership`); both required before creating/joining a team |
 | Team | `open_to_invites` | Boolean; only profiles with `true` appear in "Find teammates" |
+| Team composition | `team_members` + profile department | Teams are 3–5 members, at most **3 Developer** and **2 Marcom/Operation**; enforced by a DB trigger on `team_members` |
 | System | `role`, `created_at`, `updated_at` | `role` is server-managed; timestamps are trigger-managed |
 
 `skill_catalog` is admin-managed (`name`, `category`, `active`, `sort_order`).

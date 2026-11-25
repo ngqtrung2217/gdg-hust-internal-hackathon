@@ -66,14 +66,14 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
           <Field
             label="Số thành viên tối đa"
             htmlFor="max_team_size"
-            hint="Từ 2 đến 10."
+            hint="Theo thể lệ: từ 3 đến 5."
           >
             <Input
               id="max_team_size"
               name="max_team_size"
               type="number"
-              min={2}
-              max={10}
+              min={3}
+              max={5}
               defaultValue={settings.max_team_size}
               required
             />

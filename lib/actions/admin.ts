@@ -10,7 +10,7 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 const settingsSchema = z.object({
   allowlist_mode: z.boolean(),
-  max_team_size: z.number().int().min(2).max(10),
+  max_team_size: z.number().int().min(3).max(5),
   teams_locked: z.boolean(),
   team_creation_deadline: z.string().trim(),
 });
@@ -450,4 +450,28 @@ export async function rejectAccessRequestAction(formData: FormData) {
 
   revalidatePath("/admin");
   redirect("/admin?tab=requests&ok=1");
+}
+
+export async function adminSetRecruitingAction(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const teamId = z.string().uuid().safeParse(formData.get("team_id"));
+  const recruiting = formData.get("recruiting") === "true";
+
+  if (!teamId.success) {
+    redirect("/admin?tab=teams&error=1");
+  }
+
+  const { error } = await supabase.rpc("set_team_recruiting", {
+    p_team_id: teamId.data,
+    p_recruiting: recruiting,
+  });
+
+  if (error) {
+    redirect("/admin?tab=teams&error=1");
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/team");
+  revalidatePath("/teams");
+  redirect("/admin?tab=teams&ok=1");
 }

@@ -1,20 +1,60 @@
 import type {
+  Department,
   JoinRequestStatus,
-  PreferredRole,
+  Subteam,
   TeamStatus,
 } from "@/types/db";
 
-export const ROLE_OPTIONS: { value: PreferredRole; label: string }[] = [
-  { value: "frontend", label: "Frontend" },
-  { value: "backend", label: "Backend" },
-  { value: "mobile", label: "Mobile" },
-  { value: "ai-ml", label: "AI / ML" },
-  { value: "data", label: "Data" },
-  { value: "design", label: "Design" },
-  { value: "product", label: "Product" },
-  { value: "devops", label: "DevOps" },
-  { value: "other", label: "Khác" },
+export type DepartmentOption = {
+  value: Department;
+  label: string;
+  areas: { value: Subteam; label: string }[];
+};
+
+export const DEPARTMENT_OPTIONS: DepartmentOption[] = [
+  {
+    value: "developer",
+    label: "Developer",
+    areas: [
+      { value: "data-ai", label: "Data & AI" },
+      { value: "web", label: "Web" },
+      { value: "mobile", label: "Mobile" },
+    ],
+  },
+  {
+    value: "marcom",
+    label: "Marcom",
+    areas: [
+      { value: "content", label: "Content" },
+      { value: "design", label: "Design" },
+      { value: "photo", label: "Photo" },
+    ],
+  },
+  {
+    value: "operation",
+    label: "Operation",
+    areas: [
+      { value: "event", label: "Event" },
+      { value: "human-resources", label: "Human Resources" },
+      { value: "partnership", label: "Partnership" },
+    ],
+  },
 ];
+
+export const DEPARTMENT_LABEL: Record<Department, string> = {
+  developer: "Developer",
+  marcom: "Marcom",
+  operation: "Operation",
+};
+
+export const SUBTEAM_LABEL: Record<Subteam, string> = Object.fromEntries(
+  DEPARTMENT_OPTIONS.flatMap((department) =>
+    department.areas.map((area) => [area.value, area.label]),
+  ),
+) as Record<Subteam, string>;
+
+export const MAX_DEVELOPERS_PER_TEAM = 3;
+export const MAX_MARCOM_OPERATION_PER_TEAM = 2;
 
 export const TEAM_STATUS_LABEL: Record<TeamStatus, string> = {
   open: "Đang tuyển",

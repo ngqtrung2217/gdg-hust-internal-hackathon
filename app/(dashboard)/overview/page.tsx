@@ -189,8 +189,8 @@ export default async function OverviewPage() {
               {formatDateTime(settings?.team_creation_deadline)}
             </p>
             <p className="mt-3 text-xs leading-5 text-on-surface-variant">
-              Đội tối đa {settings?.max_team_size ?? 5} người. Sau deadline,
-              BTC có thể khóa toàn bộ thao tác đội.
+              Đội gồm 3–5 người, tối đa 3 Developer và 2 Marcom/Operation. Sau
+              deadline, BTC có thể khóa toàn bộ thao tác đội.
             </p>
           </Card>
 

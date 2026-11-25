@@ -19,9 +19,11 @@ const initialState: InviteLinkState = { ok: false };
 export function InviteLinkCard({
   teamId,
   remainingSlots,
+  recruiting,
 }: {
   teamId: string;
   remainingSlots: number;
+  recruiting: boolean;
 }) {
   const [state, formAction] = useActionState(
     createInviteLinkAction,
@@ -29,6 +31,7 @@ export function InviteLinkCard({
   );
   useActionToast(state);
   const full = remainingSlots < 1;
+  const paused = !recruiting;
 
   return (
     <Card className="p-5">
@@ -37,12 +40,20 @@ export function InviteLinkCard({
           <Link2 className="h-4 w-4 text-on-surface-variant" aria-hidden />
           <h2 className="text-base font-medium text-on-surface">Link mời</h2>
         </div>
-        <Badge tone={full ? "warning" : "neutral"}>
-          {full ? "Đội đã đủ" : `${remainingSlots} chỗ trống`}
+        <Badge tone={paused || full ? "warning" : "neutral"}>
+          {paused
+            ? "Tạm dừng tuyển"
+            : full
+              ? "Đội đã đủ"
+              : `${remainingSlots} chỗ trống`}
         </Badge>
       </div>
 
-      {full ? (
+      {paused ? (
+        <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+          Đội đang tạm dừng tuyển. Mở tuyển trước khi tạo link mời.
+        </p>
+      ) : full ? (
         <p className="mt-2 text-sm leading-6 text-on-surface-variant">
           Đội đã đủ người nên không thể tạo thêm link mời.
         </p>
@@ -53,7 +64,7 @@ export function InviteLinkCard({
         <SubmitButton
           className="w-full"
           pendingText="Đang tạo link…"
-          disabled={full}
+          disabled={paused || full}
         >
           <Link2 className="h-4 w-4" aria-hidden />
           Tạo link mời

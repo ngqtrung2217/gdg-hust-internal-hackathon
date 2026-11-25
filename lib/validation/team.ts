@@ -7,11 +7,6 @@ export const createTeamSchema = z.object({
     .min(2, "Tên đội phải có ít nhất 2 ký tự")
     .max(60, "Tên đội tối đa 60 ký tự"),
   description: z.string().trim().max(600, "Mô tả tối đa 600 ký tự"),
-  max_members: z
-    .number()
-    .int()
-    .min(2, "Đội phải có ít nhất 2 người")
-    .max(10, "Đội tối đa 10 người"),
 });
 
 export const messageSchema = z

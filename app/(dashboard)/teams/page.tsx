@@ -28,6 +28,7 @@ type TeamRow = {
   name: string;
   description: string | null;
   status: TeamStatus;
+  recruiting: boolean;
   max_members: number;
   leader_id: string;
   created_at: string;
@@ -67,14 +68,19 @@ export default async function TeamsPage({
   const { supabase, profileId } = await requireUser();
   const params = await searchParams;
 
-  const [{ data: teams }, { data: memberships }, { data: myRequests }] =
-    await Promise.all([
+  const [
+    { data: teams },
+    { data: memberships },
+    { data: myRequests },
+    { data: ownProfiles },
+  ] = await Promise.all([
       supabase
         .from("teams")
         .select(
-          "id, name, description, status, max_members, leader_id, created_at, leader:profiles!teams_leader_id_fkey(id, full_name, avatar_url, major, cohort), team_members(user_id)",
+          "id, name, description, status, recruiting, max_members, leader_id, created_at, leader:profiles!teams_leader_id_fkey(id, full_name, avatar_url, major, cohort), team_members(user_id)",
         )
         .eq("status", "open")
+        .eq("recruiting", true)
         .order("created_at", { ascending: false })
         .limit(50)
         .returns<TeamRow[]>(),
@@ -91,9 +97,17 @@ export default async function TeamsPage({
         .order("created_at", { ascending: false })
         .limit(20)
         .returns<MyRequest[]>(),
+      supabase
+        .from("profiles")
+        .select("department, subteam")
+        .eq("id", profileId)
+        .limit(1)
+        .returns<Pick<Profile, "department" | "subteam">[]>(),
     ]);
 
   const membership = memberships?.[0];
+  const ownProfile = ownProfiles?.[0];
+  const profileReady = Boolean(ownProfile?.department && ownProfile?.subteam);
   const pendingTeamIds = new Set(
     (myRequests ?? [])
       .filter((request) => request.status === "pending")
@@ -116,9 +130,25 @@ export default async function TeamsPage({
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-on-surface-variant">
           Gửi đơn kèm lời nhắn. Đội trưởng sẽ duyệt hoặc từ chối. Bạn chỉ có thể
-          ở trong một đội.
+          ở trong một đội. Đội gồm 3–5 người, tối đa 3 Developer và 2
+          Marcom/Operation.
         </p>
       </header>
+
+      {!profileReady ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl bg-warning-container p-4 text-sm text-on-warning-container">
+          <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+          <span>
+            Cập nhật Ban và Mảng trong hồ sơ trước khi gửi đơn xin vào đội.
+          </span>
+          <Link
+            href="/profile"
+            className="ml-auto font-medium underline underline-offset-2"
+          >
+            Cập nhật hồ sơ
+          </Link>
+        </div>
+      ) : null}
 
       {params.ok ? (
         <div className="flex items-center gap-2 rounded-xl bg-success-container p-4 text-sm text-on-success-container">
@@ -286,6 +316,14 @@ export default async function TeamsPage({
                   ) : isFull ? (
                     <p className="rounded-xl bg-surface-container px-3 py-2 text-xs text-on-surface-variant">
                       Đội đã đủ {team.max_members} người. Không thể gửi thêm đơn.
+                    </p>
+                  ) : !profileReady ? (
+                    <p className="rounded-xl bg-surface-container px-3 py-2 text-xs leading-5 text-on-surface-variant">
+                      Cập nhật Ban và Mảng trong{" "}
+                      <Link href="/profile" className="font-medium text-primary">
+                        hồ sơ
+                      </Link>{" "}
+                      trước khi gửi đơn.
                     </p>
                   ) : (
                     <form action={requestJoinTeamAction} className="space-y-2">

@@ -5,8 +5,12 @@ import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { createTeamAction } from "@/lib/actions/team";
 import { initialActionState } from "@/lib/actions/types";
 import { useActionToast } from "@/lib/hooks/use-action-toast";
+import {
+  MAX_DEVELOPERS_PER_TEAM,
+  MAX_MARCOM_OPERATION_PER_TEAM,
+} from "@/lib/constants";
 import { Card } from "@/components/ui/card";
-import { Field, Input, Select, Textarea } from "@/components/ui/input";
+import { Field, Input, Textarea } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 export function CreateTeamForm({
@@ -24,10 +28,6 @@ export function CreateTeamForm({
   );
   useActionToast(state);
 
-  const sizeOptions = Array.from(
-    { length: Math.max(1, maxAllowed - 1) },
-    (_, index) => index + 2,
-  );
 
   return (
     <Card className="p-6">
@@ -35,7 +35,9 @@ export function CreateTeamForm({
         Tạo đội mới
       </h2>
       <p className="mt-1 text-sm leading-6 text-on-surface-variant">
-        Bạn sẽ là đội trưởng. Có thể mời thêm thành viên sau khi tạo.
+        Bạn sẽ là đội trưởng. Đội gồm 3–5 người, tối đa{" "}
+        {MAX_DEVELOPERS_PER_TEAM} Developer và{" "}
+        {MAX_MARCOM_OPERATION_PER_TEAM} Marcom/Operation.
       </p>
 
       {disabled ? (
@@ -93,25 +95,10 @@ export function CreateTeamForm({
           />
         </Field>
 
-        <Field
-          label="Số thành viên tối đa"
-          htmlFor="max_members"
-          hint={`BTC cho phép tối đa ${maxAllowed} người.`}
-          error={state.fieldErrors?.max_members}
-        >
-          <Select
-            id="max_members"
-            name="max_members"
-            defaultValue={maxAllowed}
-            disabled={disabled}
-          >
-            {sizeOptions.map((size) => (
-              <option key={size} value={size}>
-                {size} người
-              </option>
-            ))}
-          </Select>
-        </Field>
+        <p className="rounded-xl bg-surface-container px-3 py-2 text-xs leading-5 text-on-surface-variant">
+          Đội tối đa {maxAllowed} người, do BTC cấu hình. Bạn không cần chọn số
+          lượng thành viên.
+        </p>
 
         <SubmitButton
           className="w-full"

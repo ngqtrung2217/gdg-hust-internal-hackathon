@@ -42,7 +42,8 @@ export async function updateProfileAction(
     facebook_url: formData.get("facebook_url"),
     github_url: formData.get("github_url"),
     open_to_invites: formData.get("open_to_invites") === "on",
-    preferred_roles: formData.getAll("preferred_roles").map(String),
+    department: String(formData.get("department") ?? ""),
+    subteam: String(formData.get("subteam") ?? ""),
   });
 
   if (!parsed.success) {
@@ -73,11 +74,36 @@ export async function updateProfileAction(
       facebook_url: nullable(data.facebook_url),
       github_url: nullable(data.github_url),
       open_to_invites: data.open_to_invites,
-      preferred_roles: data.preferred_roles,
+      department: data.department,
+      subteam: data.subteam,
     })
     .eq("id", profileId);
 
   if (error) {
+    if (error.message.includes("at most 3 developers")) {
+      return {
+        ok: false,
+        message:
+          "Không thể chuyển sang Developer: đội đã có 3 thành viên Developer.",
+      };
+    }
+
+    if (error.message.includes("at most 2 Marcom")) {
+      return {
+        ok: false,
+        message:
+          "Không thể chuyển sang Marcom/Operation: đội đã có 2 thành viên nhóm này.",
+      };
+    }
+
+    if (error.message.includes("full team needs at least 1")) {
+      return {
+        ok: false,
+        message:
+          "Không thể chuyển sang Developer: đội đủ người cần ít nhất 1 thành viên Marcom/Operation.",
+      };
+    }
+
     return {
       ok: false,
       message: "Không lưu được hồ sơ. Vui lòng kiểm tra lại dữ liệu.",

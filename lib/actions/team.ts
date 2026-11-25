@@ -25,6 +25,7 @@ type LeaderMembership = {
     id: string;
     max_members: number;
     status: TeamStatus;
+    recruiting: boolean;
   } | null;
 };
 
@@ -41,6 +42,39 @@ function back(path: string, kind: "error" | "ok", message?: string): never {
   redirect(`${path}?${suffix}`);
 }
 
+function teamMutationMessage(
+  error: { message?: string } | null,
+  fallback: string,
+) {
+  const message = error?.message ?? "";
+
+  if (message.includes("department is required")) {
+    return "Cập nhật Ban và Mảng trong hồ sơ trước khi tham gia đội.";
+  }
+
+  if (message.includes("at most 3 developers")) {
+    return "Đội đã đủ 3 thành viên Developer.";
+  }
+
+  if (message.includes("at most 2 Marcom")) {
+    return "Đội đã đủ 2 thành viên Marcom/Operation.";
+  }
+
+  if (message.includes("not recruiting")) {
+    return "Đội đang tạm dừng tuyển.";
+  }
+
+  if (message.includes("full team needs at least 1")) {
+    return "Đội đủ người cần có ít nhất 1 thành viên Marcom/Operation.";
+  }
+
+  if (message.includes("Team size must be between 3 and 5")) {
+    return "Đội phải có từ 3 đến 5 thành viên.";
+  }
+
+  return fallback;
+}
+
 export async function createTeamAction(
   _previous: ActionState,
   formData: FormData,
@@ -50,7 +84,6 @@ export async function createTeamAction(
   const parsed = createTeamSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description") ?? "",
-    max_members: Number(formData.get("max_members") ?? 5),
   });
 
   if (!parsed.success) {
@@ -65,14 +98,16 @@ export async function createTeamAction(
   const { data, error } = await supabase.rpc("create_team", {
     p_name: parsed.data.name,
     p_description: parsed.data.description || null,
-    p_max_members: parsed.data.max_members,
+    p_max_members: null,
   });
 
   if (error || !data) {
     return {
       ok: false,
-      message:
+      message: teamMutationMessage(
+        error,
         "Không tạo được đội. Có thể bạn đã có đội, BTC đã khóa, hoặc đã quá deadline.",
+      ),
     };
   }
 
@@ -101,7 +136,10 @@ export async function requestJoinTeamAction(formData: FormData) {
     back(
       "/teams",
       "error",
-      "Không gửi được đơn. Có thể đội đã đủ, đã khóa, hoặc bạn đã có đội.",
+      teamMutationMessage(
+        error,
+        "Không gửi được đơn. Có thể đội đã đủ, đã khóa, hoặc bạn đã có đội.",
+      ),
     );
   }
 
@@ -121,7 +159,14 @@ export async function approveJoinRequestAction(formData: FormData) {
   });
 
   if (error) {
-    back("/team", "error", "Không duyệt được đơn. Đội có thể đã đủ người.");
+    back(
+      "/team",
+      "error",
+      teamMutationMessage(
+        error,
+        "Không duyệt được đơn. Đội có thể đã đủ người.",
+      ),
+    );
   }
 
   revalidatePath("/team");
@@ -213,7 +258,10 @@ export async function inviteToTeamAction(formData: FormData) {
     back(
       "/participants",
       "error",
-      "Không mời được. Đội có thể đã đủ hoặc người này đã có đội.",
+      teamMutationMessage(
+        error,
+        "Không mời được. Đội có thể đã đủ hoặc người này đã có đội.",
+      ),
     );
   }
 
@@ -236,7 +284,7 @@ export async function createInviteLinkAction(
   const [{ data: memberships }, { data: settingsRows }] = await Promise.all([
     supabase
       .from("team_members")
-      .select("team_id, role, team:teams(id, max_members, status)")
+      .select("team_id, role, team:teams(id, max_members, status, recruiting)")
       .eq("user_id", profileId)
       .limit(1)
       .returns<LeaderMembership[]>(),
@@ -262,6 +310,10 @@ export async function createInviteLinkAction(
 
   if (team.status === "locked" || team.status === "archived") {
     return { ok: false, message: "Đội đã bị khóa." };
+  }
+
+  if (!team.recruiting) {
+    return { ok: false, message: "Đội đang tạm dừng tuyển." };
   }
 
   if (settings?.teams_locked) {
@@ -354,7 +406,10 @@ export async function respondToInviteAction(formData: FormData) {
       "/team",
       "error",
       accept
-        ? "Không tham gia được. Đội có thể đã đủ, lời mời hết hạn, hoặc bạn đã có đội."
+        ? teamMutationMessage(
+            error,
+            "Không tham gia được. Đội có thể đã đủ, lời mời hết hạn, hoặc bạn đã có đội.",
+          )
         : "Không từ chối được lời mời.",
     );
   }
@@ -405,4 +460,32 @@ export async function cancelJoinRequestAction(formData: FormData) {
   revalidatePath("/teams");
   revalidatePath("/team");
   back("/teams", "ok", "Đã hủy đơn xin vào đội.");
+}
+
+export async function setRecruitingAction(formData: FormData) {
+  const { supabase } = await requireUser();
+  const teamId = uuidSchema.safeParse(formData.get("team_id"));
+  const recruiting = formData.get("recruiting") === "true";
+
+  if (!teamId.success) {
+    back("/team", "error", "Đội không hợp lệ.");
+  }
+
+  const { error } = await supabase.rpc("set_team_recruiting", {
+    p_team_id: teamId.data,
+    p_recruiting: recruiting,
+  });
+
+  if (error) {
+    back(
+      "/team",
+      "error",
+      teamMutationMessage(error, "Không đổi được trạng thái tuyển."),
+    );
+  }
+
+  revalidatePath("/team");
+  revalidatePath("/teams");
+  revalidatePath("/admin");
+  back("/team", "ok", recruiting ? "Đã mở tuyển." : "Đã tạm dừng tuyển.");
 }

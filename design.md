@@ -313,7 +313,7 @@ Per the Google Branding Guidelines:
 
 **Team card:** team name (`title-large`), recruiting status chip, two-line description, skill chips, member avatars + `3/5`, "Request to join" CTA.
 
-**Participant card:** avatar (Google, read-only), name, headline, student ID/major/cohort (`body-small`), up to 5 skill bars from the BTC catalog, preferred-role chips, contact icons (email, Facebook, GitHub), "Looking for a team" toggle, "Invite to team" CTA.
+**Participant card:** avatar (Google, read-only), name, headline, student ID/major/cohort (`body-small`), department + subteam chips, up to 5 skill bars from the BTC catalog, contact icons (email, Facebook, GitHub), "Looking for a team" toggle, "Invite to team" CTA.
 
 ### 9.5 Tabs
 
@@ -328,7 +328,7 @@ Per the Google Branding Guidelines:
 - Default: `surface-container` background, `on-surface-variant` text.
 - Selected: `primary-container` background, `on-primary-container` text.
 - May include a 6px dot for grouping.
-- Used for preferred roles and filter chips; skills use the skill bar instead.
+- Used for department/subteam and filter chips; skills use the skill bar instead.
 
 ### 9.7 Skill bar
 
@@ -401,9 +401,10 @@ Backend   ██████░░░░  3/5
 | Section | Fields |
 |---|---|
 | Identity | Google avatar (read-only), read-only Google email, full name, student ID, major, cohort |
+| Department | Ban (Developer / Marcom / Operation) and mảng (subteam) matching the event structure |
 | Contact | Contact email, Facebook, GitHub |
 | About | Headline (single line, 120 chars), bio (textarea, 600 chars) |
-| Skills | Skill picker: up to 5 active skills from the BTC catalog, each with a level 1–5; preferred roles |
+| Skills | Skill picker: up to 5 active skills from the BTC catalog, each with a level 1–5 |
 | Team | "Open to invites" switch with helper text |
 
 - The header shows a **profile completeness bar** computed from required fields,

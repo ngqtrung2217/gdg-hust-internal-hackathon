@@ -115,6 +115,16 @@ on conflict (email) do update set role = 'admin', active = true;
 The first Google sign-in creates the profile with `role = 'admin'` from the
 allowlist row.
 
+## Departments and team composition
+
+`profiles.department` is one of `developer`, `marcom`, or `operation`, and
+`profiles.subteam` must belong to that department (constraint-enforced). Team
+composition follows the event rules: 3–5 members, at most 3 Developer members,
+and at most 2 Marcom/Operation members. The insert trigger on `team_members`
+blocks any path that would exceed those caps; a profile without a department
+cannot join a team. Changing department while in a team is validated against the
+same caps.
+
 ## Invite links
 
 The application generates a random token, hashes it with SHA-256, and stores only

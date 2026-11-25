@@ -15,7 +15,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SkillBar } from "@/components/ui/skill-bar";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FlashToast } from "@/components/flash-toast";
-import { ROLE_OPTIONS } from "@/lib/constants";
+import { DEPARTMENT_OPTIONS } from "@/lib/constants";
 import type { ProfileWithSkills, TeamStatus } from "@/types/db";
 
 
@@ -49,7 +49,7 @@ export default async function ParticipantsPage({
       supabase
         .from("profiles")
         .select(
-          "id, full_name, email, contact_email, avatar_url, headline, bio, major, cohort, student_id, preferred_roles, facebook_url, github_url, open_to_invites, profile_skills(skill_id, level, skill:skill_catalog(id, name, category))",
+          "id, full_name, email, contact_email, avatar_url, headline, bio, major, cohort, student_id, department, subteam, facebook_url, github_url, open_to_invites, profile_skills(skill_id, level, skill:skill_catalog(id, name, category))",
         )
         .eq("open_to_invites", true)
         .neq("id", profileId)
@@ -101,7 +101,8 @@ export default async function ParticipantsPage({
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-on-surface-variant">
           Những thí sinh đang mở nhận lời mời và chưa thuộc đội nào. Chỉ đội
-          trưởng mới gửi được lời mời.
+          trưởng mới gửi được lời mời. Mỗi đội tối đa 3 Developer và 2
+          Marcom/Operation.
         </p>
       </header>
 
@@ -150,6 +151,12 @@ export default async function ParticipantsPage({
             const skills = (profile.profile_skills ?? []).filter(
               (item) => item.skill,
             );
+            const department = DEPARTMENT_OPTIONS.find(
+              (option) => option.value === profile.department,
+            );
+            const area = department?.areas.find(
+              (item) => item.value === profile.subteam,
+            );
             const alreadyInvited = invited.has(profile.id);
             const canInvite = Boolean(team && isLeader && !teamFull);
 
@@ -179,16 +186,14 @@ export default async function ParticipantsPage({
                   </div>
                 </div>
 
-                {profile.preferred_roles.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {profile.preferred_roles.map((role) => (
-                      <Badge key={role} tone="neutral">
-                        {ROLE_OPTIONS.find((item) => item.value === role)
-                          ?.label ?? role}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : null}
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {department ? (
+                    <Badge tone="primary">{department.label}</Badge>
+                  ) : (
+                    <Badge tone="warning">Chưa chọn ban</Badge>
+                  )}
+                  {area ? <Badge tone="neutral">{area.label}</Badge> : null}
+                </div>
 
                 {skills.length > 0 ? (
                   <div className="mt-4">
