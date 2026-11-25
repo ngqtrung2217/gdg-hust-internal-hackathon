@@ -13,6 +13,17 @@ type GoogleProfile = {
   picture?: string | null;
 };
 
+const vercelHost =
+  process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
+
+if (
+  vercelHost &&
+  (!process.env.AUTH_URL || /localhost|127\.0\.0\.1/.test(process.env.AUTH_URL))
+) {
+  process.env.AUTH_URL = `https://${vercelHost}`;
+  process.env.NEXTAUTH_URL = `https://${vercelHost}`;
+}
+
 const env = getServerEnv();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({

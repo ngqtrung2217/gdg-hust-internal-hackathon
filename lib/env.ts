@@ -1,6 +1,12 @@
 import "server-only";
 import { z } from "zod";
 
+const vercelHost =
+  process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
+const siteUrl = vercelHost
+  ? `https://${vercelHost}`
+  : process.env.NEXT_PUBLIC_SITE_URL;
+
 const publicSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(20),
@@ -11,7 +17,7 @@ export const publicEnv = publicSchema.parse({
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+  NEXT_PUBLIC_SITE_URL: siteUrl,
 });
 
 const serverSchema = z.object({
