@@ -94,27 +94,17 @@ export function ParticipantCard({
           {area ? <Badge tone="neutral">{area}</Badge> : null}
         </div>
 
-        {skills.length > 0 ? (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {skills.slice(0, 3).map((item) => (
-              <Badge key={item.skill_id} tone="outline">
-                {item.skill?.name ?? "Kỹ năng"} · {item.level}/5
-              </Badge>
-            ))}
-            {skills.length > 3 ? (
-              <Badge tone="neutral">+{skills.length - 3}</Badge>
-            ) : null}
-          </div>
-        ) : (
-          <p className="mt-3 text-xs text-on-surface-variant">
-            Chưa chọn kỹ năng.
-          </p>
-        )}
-
-        <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-outline-variant pt-4">
-          <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <div className="mt-auto flex items-center gap-2 border-t border-outline-variant pt-4">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label="Xem chi tiết hồ sơ"
+            title="Xem chi tiết"
+            onClick={() => setOpen(true)}
+            className="h-9 w-9 p-0"
+          >
             <Eye className="h-4 w-4" aria-hidden />
-            Xem chi tiết
           </Button>
 
           {alreadyInvited ? (
