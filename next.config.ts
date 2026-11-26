@@ -41,6 +41,14 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  experimental: {
+    // Keep visited dynamic pages in the client router cache so revisiting a
+    // tab does not trigger another server + Supabase round trip. Server
+    // Actions call revalidatePath(), so mutations still refresh the pages.
+    staleTimes: {
+      dynamic: 30,
+    },
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
