@@ -150,6 +150,7 @@ export function SkillEditor({
                   <SkillBar
                     name={name}
                     level={row.level}
+                    category={skill?.category}
                     className="min-w-0 flex-1"
                   />
                   <Button

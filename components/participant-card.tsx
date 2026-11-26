@@ -209,6 +209,7 @@ export function ParticipantCard({
                       key={item.skill_id}
                       name={item.skill?.name ?? "Kỹ năng"}
                       level={item.level}
+                      category={item.skill?.category}
                     />
                   ))}
                 </div>
