@@ -68,7 +68,7 @@ export default async function LoginPage({
             Đăng nhập
           </h1>
           <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-            Internal Hackathon 2026 · 26/11–15/12. Dùng email BTC đã duyệt.
+            Dùng email đã được BTC duyệt.
           </p>
 
           {message ? (

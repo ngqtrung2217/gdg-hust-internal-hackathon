@@ -48,8 +48,7 @@ export default async function ProfilePage() {
           Hồ sơ của bạn
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-on-surface-variant">
-          Thông tin này hiển thị cho các thí sinh khác khi tìm đội. Chỉ email và
-          ảnh đại diện Google là cố định.
+          Email và ảnh Google không sửa được.
         </p>
       </header>
 

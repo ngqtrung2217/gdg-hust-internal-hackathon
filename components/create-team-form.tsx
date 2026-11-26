@@ -5,10 +5,6 @@ import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { createTeamAction } from "@/lib/actions/team";
 import { initialActionState } from "@/lib/actions/types";
 import { useActionToast } from "@/lib/hooks/use-action-toast";
-import {
-  MAX_DEVELOPERS_PER_TEAM,
-  MAX_MARCOM_OPERATION_PER_TEAM,
-} from "@/lib/constants";
 import { Card } from "@/components/ui/card";
 import { Field, Input, Textarea } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -32,11 +28,6 @@ export function CreateTeamForm({
       <h2 className="text-xl font-medium tracking-tight text-on-surface">
         Tạo đội mới
       </h2>
-      <p className="mt-1 text-sm leading-6 text-on-surface-variant">
-        Bạn sẽ là đội trưởng. Đội gồm 3–5 người, tối đa{" "}
-        {MAX_DEVELOPERS_PER_TEAM} Developer và{" "}
-        {MAX_MARCOM_OPERATION_PER_TEAM} Marcom/Operation.
-      </p>
 
       {disabled ? (
         <div className="mt-4 flex gap-2 rounded-xl bg-warning-container p-3 text-sm leading-6 text-on-warning-container">

@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/require-user";
 import { publicEnv } from "@/lib/env";
-import { INVITE_LINK_DAYS } from "@/lib/constants";
+import {
+  INVITE_LINK_DAYS,
+  MAX_PENDING_INVITES,
+  MAX_PENDING_JOIN_REQUESTS,
+} from "@/lib/constants";
 import { hashInviteToken } from "@/lib/invite-token";
 import { createTeamSchema, messageSchema, uuidSchema } from "@/lib/validation/team";
 import { isPast } from "@/lib/utils/date";
@@ -33,6 +37,15 @@ type FormationSettings = Pick<
   AppSettings,
   "team_creation_deadline" | "teams_locked"
 >;
+
+const RETURN_PATHS = new Set(["/team", "/overview"]);
+
+function returnPath(formData: FormData, fallback: string) {
+  const value = formData.get("return_to");
+  return typeof value === "string" && RETURN_PATHS.has(value)
+    ? value
+    : fallback;
+}
 
 function back(path: string, kind: "error" | "ok", message?: string): never {
   const suffix =
@@ -62,6 +75,14 @@ function teamMutationMessage(
 
   if (message.includes("not recruiting")) {
     return "Đội đang tạm dừng tuyển.";
+  }
+
+  if (message.includes("Too many pending join requests")) {
+    return `Bạn đã có ${MAX_PENDING_JOIN_REQUESTS} đơn đang chờ duyệt. Huỷ bớt hoặc đợi phản hồi trước khi gửi thêm.`;
+  }
+
+  if (message.includes("Too many pending invites")) {
+    return `Bạn đã gửi ${MAX_PENDING_INVITES} lời mời đang chờ phản hồi. Huỷ bớt hoặc đợi phản hồi trước khi mời thêm.`;
   }
 
   if (message.includes("full team needs at least 1")) {
@@ -114,6 +135,7 @@ export async function createTeamAction(
   revalidatePath("/team");
   revalidatePath("/teams");
   revalidatePath("/participants");
+  revalidatePath("/overview");
   redirect("/team");
 }
 
@@ -145,14 +167,16 @@ export async function requestJoinTeamAction(formData: FormData) {
 
   revalidatePath("/teams");
   revalidatePath("/team");
+  revalidatePath("/overview");
   back("/teams", "ok", "Đã gửi đơn xin vào đội.");
 }
 
 export async function approveJoinRequestAction(formData: FormData) {
   const { supabase } = await requireUser();
+  const path = returnPath(formData, "/team");
 
   const requestId = uuidSchema.safeParse(formData.get("request_id"));
-  if (!requestId.success) back("/team", "error", "Đơn không hợp lệ.");
+  if (!requestId.success) back(path, "error", "Đơn không hợp lệ.");
 
   const { error } = await supabase.rpc("approve_join_request", {
     p_request_id: requestId.data,
@@ -160,7 +184,7 @@ export async function approveJoinRequestAction(formData: FormData) {
 
   if (error) {
     back(
-      "/team",
+      path,
       "error",
       teamMutationMessage(
         error,
@@ -171,23 +195,26 @@ export async function approveJoinRequestAction(formData: FormData) {
 
   revalidatePath("/team");
   revalidatePath("/teams");
-  back("/team", "ok", "Thao tác đã hoàn tất.");
+  revalidatePath("/overview");
+  back(path, "ok", "Thao tác đã hoàn tất.");
 }
 
 export async function rejectJoinRequestAction(formData: FormData) {
   const { supabase } = await requireUser();
+  const path = returnPath(formData, "/team");
 
   const requestId = uuidSchema.safeParse(formData.get("request_id"));
-  if (!requestId.success) back("/team", "error", "Đơn không hợp lệ.");
+  if (!requestId.success) back(path, "error", "Đơn không hợp lệ.");
 
   const { error } = await supabase.rpc("reject_join_request", {
     p_request_id: requestId.data,
   });
 
-  if (error) back("/team", "error", "Không từ chối được đơn.");
+  if (error) back(path, "error", "Không từ chối được đơn.");
 
   revalidatePath("/team");
-  back("/team", "ok", "Thao tác đã hoàn tất.");
+  revalidatePath("/overview");
+  back(path, "ok", "Thao tác đã hoàn tất.");
 }
 
 export async function leaveTeamAction(formData: FormData) {
@@ -207,6 +234,7 @@ export async function leaveTeamAction(formData: FormData) {
   revalidatePath("/team");
   revalidatePath("/teams");
   revalidatePath("/participants");
+  revalidatePath("/overview");
   back("/team", "ok", "Thao tác đã hoàn tất.");
 }
 
@@ -228,6 +256,7 @@ export async function transferLeadershipAction(formData: FormData) {
   if (error) back("/team", "error", "Không chuyển được đội trưởng.");
 
   revalidatePath("/team");
+  revalidatePath("/overview");
   back("/team", "ok", "Thao tác đã hoàn tất.");
 }
 
@@ -383,17 +412,19 @@ export async function joinWithLinkAction(formData: FormData) {
   revalidatePath("/team");
   revalidatePath("/teams");
   revalidatePath("/participants");
+  revalidatePath("/overview");
   redirect("/team?joined=1");
 }
 
 export async function respondToInviteAction(formData: FormData) {
   const { supabase } = await requireUser();
+  const path = returnPath(formData, "/team");
 
   const inviteId = uuidSchema.safeParse(formData.get("invite_id"));
   const accept = formData.get("accept") === "true";
 
   if (!inviteId.success) {
-    back("/team", "error", "Lời mời không hợp lệ.");
+    back(path, "error", "Lời mời không hợp lệ.");
   }
 
   const { error } = await supabase.rpc("respond_to_invite", {
@@ -403,7 +434,7 @@ export async function respondToInviteAction(formData: FormData) {
 
   if (error) {
     back(
-      "/team",
+      path,
       "error",
       accept
         ? teamMutationMessage(
@@ -417,7 +448,8 @@ export async function respondToInviteAction(formData: FormData) {
   revalidatePath("/team");
   revalidatePath("/teams");
   revalidatePath("/participants");
-  back("/team", "ok", "Thao tác đã hoàn tất.");
+  revalidatePath("/overview");
+  back(path, "ok", "Thao tác đã hoàn tất.");
 }
 
 export async function cancelInviteAction(formData: FormData) {
@@ -459,6 +491,7 @@ export async function cancelJoinRequestAction(formData: FormData) {
 
   revalidatePath("/teams");
   revalidatePath("/team");
+  revalidatePath("/overview");
   back("/teams", "ok", "Đã hủy đơn xin vào đội.");
 }
 
@@ -486,6 +519,7 @@ export async function setRecruitingAction(formData: FormData) {
 
   revalidatePath("/team");
   revalidatePath("/teams");
+  revalidatePath("/overview");
   revalidatePath("/admin");
   back("/team", "ok", recruiting ? "Đã mở tuyển." : "Đã tạm dừng tuyển.");
 }

@@ -21,9 +21,6 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
   return (
     <Card className="p-6">
       <h2 className="text-lg font-medium text-on-surface">Cấu hình cuộc thi</h2>
-      <p className="mt-1 text-sm leading-6 text-on-surface-variant">
-        Các thay đổi áp dụng ngay cho toàn bộ hệ thống.
-      </p>
 
       {state.message ? (
         <div

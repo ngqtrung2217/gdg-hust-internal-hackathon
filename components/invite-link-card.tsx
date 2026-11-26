@@ -71,11 +71,7 @@ export function InviteLinkCard({
 
       {paused ? (
         <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-          Đội đang tạm dừng tuyển. Mở tuyển trước khi tạo link mời.
-        </p>
-      ) : full ? (
-        <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-          Đội đã đủ người nên không thể tạo thêm link mời.
+          Mở tuyển trước khi tạo link mời.
         </p>
       ) : null}
 

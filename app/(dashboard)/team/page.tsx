@@ -33,6 +33,7 @@ import {
   DEPARTMENT_OPTIONS,
   MAX_DEVELOPERS_PER_TEAM,
   MAX_MARCOM_OPERATION_PER_TEAM,
+  MAX_PENDING_INVITES,
 } from "@/lib/constants";
 import { deadlineLabel, formatDateTime, isPast } from "@/lib/utils/date";
 import type {
@@ -155,10 +156,6 @@ export default async function TeamPage({
           <h1 className="mt-1 text-3xl font-medium tracking-tight text-on-surface sm:text-4xl">
             Bạn chưa có đội
           </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-on-surface-variant">
-            Tạo đội mới để trở thành đội trưởng, hoặc tìm một đội đang tuyển.
-            Mỗi người chỉ thuộc một đội.
-          </p>
         </header>
 
         {!profileReady ? (
@@ -192,9 +189,6 @@ export default async function TeamPage({
             <h2 className="text-lg font-medium text-on-surface">
               Lời mời vào đội
             </h2>
-            <p className="mt-1 text-sm text-on-surface-variant">
-              Chấp nhận một lời mời để vào đội. Bạn chỉ có thể ở một đội.
-            </p>
             <ul className="mt-4 space-y-3">
               {pendingInvites.map((invite) => {
                 const openTeam = invite.team?.status === "open";
@@ -296,11 +290,8 @@ export default async function TeamPage({
 
             <Card className="p-5">
               <h2 className="text-base font-medium text-on-surface">
-                Chưa muốn làm đội trưởng?
+                Tìm đội đang tuyển
               </h2>
-              <p className="mt-1 text-sm leading-6 text-on-surface-variant">
-                Duyệt danh sách đội đang tuyển và gửi đơn xin vào.
-              </p>
               <Link
                 href="/teams"
                 className={buttonClass({
@@ -346,7 +337,7 @@ export default async function TeamPage({
         ? supabase
             .from("team_invites")
             .select(
-              "id, team_id, inviter_id, invitee_id, status, created_at, invitee:profiles!team_invites_invitee_id_fkey(id, full_name, email, avatar_url)",
+              "id, team_id, inviter_id, invitee_id, status, created_at, expires_at, invitee:profiles!team_invites_invitee_id_fkey(id, full_name, email, avatar_url)",
             )
             .eq("team_id", team.id)
             .order("created_at", { ascending: false })
@@ -356,6 +347,9 @@ export default async function TeamPage({
     ]);
 
   const roster = members ?? [];
+  const activePendingInvites = (invites ?? []).filter(
+    (invite) => invite.status === "pending" && !isPast(invite.expires_at),
+  ).length;
   const memberCount = roster.length;
   const leader = roster.find((member) => member.role === "leader")?.profile;
   const developerCount = roster.filter(
@@ -588,7 +582,6 @@ export default async function TeamPage({
                   className="mt-4"
                   icon={<Users className="h-5 w-5" aria-hidden />}
                   title="Chưa có đơn nào"
-                  description="Khi có thí sinh xin vào đội, đơn sẽ xuất hiện ở đây."
                 />
               )}
             </Card>
@@ -596,9 +589,20 @@ export default async function TeamPage({
 
           {isLeader ? (
             <Card className="p-6">
-              <h2 className="text-lg font-medium text-on-surface">
-                Lời mời đã gửi
-              </h2>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-lg font-medium text-on-surface">
+                  Lời mời đã gửi
+                </h2>
+                <Badge
+                  tone={
+                    activePendingInvites >= MAX_PENDING_INVITES
+                      ? "warning"
+                      : "neutral"
+                  }
+                >
+                  {activePendingInvites}/{MAX_PENDING_INVITES} đang chờ
+                </Badge>
+              </div>
               {invites && invites.length > 0 ? (
                 <ul className="mt-4 divide-y divide-outline-variant">
                   {invites.map((invite) => {
@@ -761,7 +765,7 @@ export default async function TeamPage({
                 <p className="mb-2 text-xs leading-5 text-on-surface-variant">
                   {isLeader
                     ? "Đội chỉ còn bạn. Rời đội sẽ xóa đội này."
-                    : "Bạn có thể rời đội và tham gia đội khác."}
+                    : "Rời đội để tham gia đội khác."}
                 </p>
               )}
               <ConfirmSubmitButton

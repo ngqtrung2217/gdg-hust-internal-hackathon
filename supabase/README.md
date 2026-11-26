@@ -13,6 +13,9 @@ PostgreSQL schema for the GDG HUST internal hackathon. The source of truth is
   - one team per participant (`team_members.user_id` unique);
   - at most five skills per profile;
   - no duplicate pending request or invite;
+  - at most five pending join requests per participant and five pending
+    invites per inviter; cancelling, rejecting, declining, or expiring frees
+    the slot;
   - team capacity; locked teams cannot gain members.
 - **Explicit types and time.** `uuid` primary keys, `timestamptz`, enums for
   closed sets, `smallint` only where the range is genuinely small.
@@ -43,6 +46,8 @@ PostgreSQL schema for the GDG HUST internal hackathon. The source of truth is
 | `20261125001000_admin_rpc.sql` | Admin settings, allowlist import, announcements, team lock, invite-link creation |
 | `20261125001100_default_skills.sql` | Default skill catalog |
 | `20261125001200_bootstrap_admin.sql` | Bootstrap `ngqtrung22.17@gmail.com` as admin |
+| `20261126000100_more_skills.sql` | Extra business, marketing, and operation skills |
+| `20261126000200_pending_limits.sql` | Pending join-request and invite caps per user |
 
 `seed.sql` is for local development only.
 

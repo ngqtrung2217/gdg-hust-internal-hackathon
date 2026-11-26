@@ -64,7 +64,7 @@ const stages = [
     icon: FileText,
     date: "26/11–03/12",
     title: "Đăng ký & proposal",
-    body: "Đội 3–5 người, tối đa 3 Dev và 1–2 Marcom hoặc Operation. Proposal gồm thông tin đội, tổng quan, vấn đề & người dùng, giải pháp, công nghệ & kiến trúc, hướng phát triển.",
+    body: "Nộp proposal: tổng quan, vấn đề, giải pháp, công nghệ, hướng phát triển.",
   },
   {
     icon: Presentation,

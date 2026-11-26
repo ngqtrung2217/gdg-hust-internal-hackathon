@@ -4,6 +4,9 @@ import { ParticipantCard } from "@/components/participant-card";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FlashToast } from "@/components/flash-toast";
+import { MAX_PENDING_INVITES } from "@/lib/constants";
+import { isPast } from "@/lib/utils/date";
+import { shuffle } from "@/lib/utils/random";
 import type { ProfileWithSkills, TeamStatus } from "@/types/db";
 
 
@@ -57,24 +60,32 @@ export default async function ParticipantsPage({
   const isLeader = membership?.role === "leader";
 
   const taken = new Set((allMembers ?? []).map((row) => row.user_id));
-  const candidates = (profiles ?? []).filter(
-    (profile) => !taken.has(profile.id),
+  const candidates = shuffle(
+    (profiles ?? []).filter((profile) => !taken.has(profile.id)),
   );
 
   const { data: invites } = team
     ? await supabase
         .from("team_invites")
-        .select("invitee_id")
+        .select("invitee_id, expires_at")
         .eq("team_id", team.id)
         .eq("status", "pending")
-        .returns<{ invitee_id: string }[]>()
-    : { data: [] as { invitee_id: string }[] };
+        .returns<{ invitee_id: string; expires_at: string }[]>()
+    : { data: [] as { invitee_id: string; expires_at: string }[] };
 
-  const invited = new Set((invites ?? []).map((row) => row.invitee_id));
+  const activeInvites = (invites ?? []).filter(
+    (row) => !isPast(row.expires_at),
+  );
+  const invited = new Set(activeInvites.map((row) => row.invitee_id));
+  const inviteQuotaLeft = Math.max(
+    0,
+    MAX_PENDING_INVITES - activeInvites.length,
+  );
 
   const teamCount = team?.team_members?.[0]?.count ?? 0;
 
   const teamFull = team ? teamCount >= team.max_members : false;
+  const canInvite = Boolean(team && isLeader && !teamFull && inviteQuotaLeft > 0);
 
   return (
     <div className="space-y-6">
@@ -86,9 +97,7 @@ export default async function ParticipantsPage({
           Tìm đồng đội
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-on-surface-variant">
-          Những thí sinh đang mở nhận lời mời và chưa thuộc đội nào. Chỉ đội
-          trưởng mới gửi được lời mời. Mỗi đội tối đa 3 Developer và 2
-          Marcom/Operation.
+          Chỉ đội trưởng gửi được lời mời.
         </p>
       </header>
 
@@ -129,6 +138,12 @@ export default async function ParticipantsPage({
           <Users className="h-5 w-5 text-on-surface-variant" aria-hidden />
           Đội <strong>{team.name}</strong> đã đủ {team.max_members} người.
         </Card>
+      ) : inviteQuotaLeft === 0 ? (
+        <Card className="flex items-center gap-3 p-5 text-sm text-on-surface">
+          <Users className="h-5 w-5 text-on-surface-variant" aria-hidden />
+          Bạn đã gửi {MAX_PENDING_INVITES} lời mời đang chờ phản hồi. Huỷ bớt
+          trong trang Đội của tôi hoặc đợi phản hồi trước khi mời thêm.
+        </Card>
       ) : null}
 
       {candidates.length > 0 ? (
@@ -138,7 +153,7 @@ export default async function ParticipantsPage({
               key={profile.id}
               profile={profile}
               alreadyInvited={invited.has(profile.id)}
-              canInvite={Boolean(team && isLeader && !teamFull)}
+              canInvite={canInvite}
             />
           ))}
         </div>
@@ -146,7 +161,6 @@ export default async function ParticipantsPage({
         <EmptyState
           icon={<UsersRound className="h-5 w-5" aria-hidden />}
           title="Chưa có ai đang tìm đội"
-          description="Khi thí sinh bật “Đang tìm đội”, hồ sơ sẽ xuất hiện ở đây."
         />
       )}
     </div>

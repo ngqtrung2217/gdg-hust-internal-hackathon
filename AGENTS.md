@@ -169,8 +169,8 @@ logic in `lib`, SQL in `supabase/migrations`.
 | `profile_skills` | Skills selected by each profile | Unique `(profile_id, skill_id)`; `level` 1–5; **max 5 rows per profile** enforced by trigger |
 | `teams` | Team metadata | `leader_id` references a profile; unique `slug`, `invite_code` |
 | `team_members` | Membership | Unique `user_id` (one team per person); unique `(team_id, user_id)` |
-| `team_join_requests` | Request to join | Unique pending request per `(team_id, user_id)` |
-| `team_invites` | Direct invite by leader | Unique pending invite per `(team_id, invitee_id)` |
+| `team_join_requests` | Request to join | Unique pending request per `(team_id, user_id)`; max 5 pending per user |
+| `team_invites` | Direct invite by leader | Unique pending invite per `(team_id, invitee_id)`; max 5 pending per inviter |
 | `announcements` | Overview notices | `body_md` is markdown with inline `https://` links; sanitize before render; admin write, authenticated read |
 | `app_settings` | Singleton event config | Admin write; `allowlist_mode`, `max_team_size`, deadlines, `teams_locked` |
 
