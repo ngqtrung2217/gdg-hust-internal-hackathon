@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
+import { CopyButton } from "@/components/ui/copy-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FlashToast } from "@/components/flash-toast";
@@ -57,6 +58,7 @@ type Membership = {
     max_members: number;
     status: TeamStatus;
     recruiting: boolean;
+    code: string;
     created_at: string;
   } | null;
 };
@@ -110,7 +112,7 @@ export default async function TeamPage({
       supabase
         .from("team_members")
         .select(
-          "team_id, role, team:teams(id, name, description, leader_id, max_members, status, recruiting, created_at)",
+          "team_id, role, team:teams(id, name, description, leader_id, max_members, status, recruiting, code, created_at)",
         )
         .eq("user_id", profileId)
         .limit(1)
@@ -374,6 +376,13 @@ export default async function TeamPage({
           <p className="mt-2 max-w-2xl text-sm leading-6 text-on-surface-variant">
             {team.description || "Đội chưa có mô tả."}
           </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-on-surface-variant">Mã đội</span>
+            <span className="rounded-lg bg-surface-container px-2 py-1 font-mono text-sm tracking-widest text-on-surface">
+              {team.code}
+            </span>
+            <CopyButton value={team.code} label="Sao chép mã" />
+          </div>
         </div>
         <Badge tone={recruitingState(team).tone}>
           {recruitingState(team).label} · {memberCount}/{team.max_members}
