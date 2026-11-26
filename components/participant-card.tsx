@@ -106,7 +106,7 @@ export function ParticipantCard({
         </div>
 
         {alreadyInvited || canInvite ? (
-          <div className="mt-auto flex items-center justify-end border-t border-outline-variant pt-4">
+          <div className="mt-auto flex items-center justify-end pt-4">
             {alreadyInvited ? (
               <Badge tone="warning">Đã mời</Badge>
             ) : (
