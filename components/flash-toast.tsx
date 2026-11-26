@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import toast from "react-hot-toast";
 
 export function FlashToast({
@@ -11,7 +11,6 @@ export function FlashToast({
   ok?: string;
   error?: string;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -24,8 +23,20 @@ export function FlashToast({
       toast.error(error === "1" ? "Thao tác không thành công." : error);
     }
 
-    router.replace(pathname, { scroll: false });
-  }, [ok, error, pathname, router]);
+    // Strip the flash params without a router navigation: router.replace()
+    // re-ran the whole server render (extra Supabase round trips) and dropped
+    // unrelated params such as the admin `tab`.
+    const params = new URLSearchParams(window.location.search);
+    params.delete("ok");
+    params.delete("error");
+    const query = params.toString();
+
+    window.history.replaceState(
+      null,
+      "",
+      `${pathname}${query ? `?${query}` : ""}${window.location.hash}`,
+    );
+  }, [ok, error, pathname]);
 
   return null;
 }

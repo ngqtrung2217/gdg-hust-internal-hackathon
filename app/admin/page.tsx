@@ -32,6 +32,7 @@ import { ConfirmDeleteForm } from "@/components/admin/confirm-delete-form";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Select } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FlashToast } from "@/components/flash-toast";
 import { formatDateTime } from "@/lib/utils/date";
@@ -84,6 +85,13 @@ const tabs = [
   { id: "teams", label: "Đội thi", icon: Users },
 ] as const;
 
+const PAGE_SIZE = {
+  allowlist: 25,
+  requests: 25,
+  participants: 25,
+  teams: 20,
+} as const;
+
 const statToneClass = {
   primary: "bg-primary-container text-on-primary-container",
   success: "bg-success-container text-on-success-container",
@@ -94,13 +102,27 @@ const statToneClass = {
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; ok?: string; error?: string }>;
+  searchParams: Promise<{
+    tab?: string;
+    page?: string;
+    ok?: string;
+    error?: string;
+  }>;
 }) {
   const { supabase } = await requireAdmin();
   const params = await searchParams;
   const tab = tabs.some((item) => item.id === params.tab)
     ? params.tab
     : "settings";
+
+  const requestedPage = Number.parseInt(params.page ?? "1", 10);
+  const pageNumber =
+    Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+
+  const tabHref = (targetTab: string, targetPage: number) =>
+    targetPage > 1
+      ? `/admin?tab=${targetTab}&page=${targetPage}`
+      : `/admin?tab=${targetTab}`;
 
   const [
     { data: settingsRows },
@@ -119,29 +141,43 @@ export default async function AdminPage({
       .eq("id", 1)
       .limit(1)
       .returns<AppSettings[]>(),
-    supabase.rpc("admin_list_allowlist"),
+    tab === "allowlist"
+      ? supabase.rpc("admin_list_allowlist")
+      : Promise.resolve({ data: [] as AllowlistRow[] }),
     supabase.rpc("admin_list_access_requests"),
-    supabase
-      .from("announcements")
-      .select("id, title, body_md, pinned, published_at")
-      .order("pinned", { ascending: false })
-      .order("published_at", { ascending: false })
-      .limit(50)
-      .returns<Announcement[]>(),
-    supabase
-      .from("teams")
-      .select(
-        "id, name, status, recruiting, max_members, created_at, leader_id, leader:profiles!teams_leader_id_fkey(full_name), team_members(user_id, role, profile:profiles(full_name))",
-      )
-      .order("created_at", { ascending: false })
-      .limit(100)
-      .returns<AdminTeam[]>(),
-    supabase
-      .from("profiles")
-      .select("*, team_members(team:teams(name))")
-      .order("full_name", { ascending: true })
-      .limit(500)
-      .returns<AdminProfile[]>(),
+    tab === "announcements"
+      ? supabase
+          .from("announcements")
+          .select("id, title, body_md, pinned, published_at")
+          .order("pinned", { ascending: false })
+          .order("published_at", { ascending: false })
+          .limit(50)
+          .returns<Announcement[]>()
+      : Promise.resolve({ data: [] as Announcement[] }),
+    tab === "teams"
+      ? supabase
+          .from("teams")
+          .select(
+            "id, name, status, recruiting, max_members, created_at, leader_id, leader:profiles!teams_leader_id_fkey(full_name), team_members(user_id, role, profile:profiles(full_name))",
+          )
+          .order("created_at", { ascending: false })
+          .range(
+            (pageNumber - 1) * PAGE_SIZE.teams,
+            pageNumber * PAGE_SIZE.teams - 1,
+          )
+          .returns<AdminTeam[]>()
+      : Promise.resolve({ data: [] as AdminTeam[] }),
+    tab === "participants"
+      ? supabase
+          .from("profiles")
+          .select("*, team_members(team:teams(name))")
+          .order("full_name", { ascending: true })
+          .range(
+            (pageNumber - 1) * PAGE_SIZE.participants,
+            pageNumber * PAGE_SIZE.participants - 1,
+          )
+          .returns<AdminProfile[]>()
+      : Promise.resolve({ data: [] as AdminProfile[] }),
     supabase
       .from("profiles")
       .select("*", { count: "exact", head: true }),
@@ -166,6 +202,39 @@ export default async function AdminPage({
     0,
     (profilesCount ?? 0) - (membersCount ?? 0),
   );
+
+  const allowlistTotal = allowlist.length;
+  const allowlistPages = Math.max(
+    1,
+    Math.ceil(allowlistTotal / PAGE_SIZE.allowlist),
+  );
+  const allowlistPage = Math.min(pageNumber, allowlistPages);
+  const allowlistRows = allowlist.slice(
+    (allowlistPage - 1) * PAGE_SIZE.allowlist,
+    allowlistPage * PAGE_SIZE.allowlist,
+  );
+
+  const requestsTotal = accessRequests.length;
+  const requestsPages = Math.max(
+    1,
+    Math.ceil(requestsTotal / PAGE_SIZE.requests),
+  );
+  const requestsPage = Math.min(pageNumber, requestsPages);
+  const requestRows = accessRequests.slice(
+    (requestsPage - 1) * PAGE_SIZE.requests,
+    requestsPage * PAGE_SIZE.requests,
+  );
+
+  const participantsTotal = profilesCount ?? 0;
+  const participantsPages = Math.max(
+    1,
+    Math.ceil(participantsTotal / PAGE_SIZE.participants),
+  );
+  const participantsPage = Math.min(pageNumber, participantsPages);
+
+  const teamsTotal = teamsCount ?? 0;
+  const teamsPages = Math.max(1, Math.ceil(teamsTotal / PAGE_SIZE.teams));
+  const teamsPage = Math.min(pageNumber, teamsPages);
 
   return (
     <div className="space-y-6">
@@ -298,13 +367,13 @@ export default async function AdminPage({
                   Danh sách truy cập
                 </h2>
                 <p className="mt-1 text-sm text-on-surface-variant">
-                  {allowlist.length} email. Admin cũng phải nằm trong danh sách.
+                  {allowlistTotal} email. Admin cũng phải nằm trong danh sách.
                 </p>
               </div>
-              <Badge tone="neutral">{allowlist.length}</Badge>
+              <Badge tone="neutral">{allowlistTotal}</Badge>
             </div>
 
-            {allowlist.length > 0 ? (
+            {allowlistRows.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[900px] text-sm">
                   <thead>
@@ -318,7 +387,7 @@ export default async function AdminPage({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant">
-                    {allowlist.map((row) => (
+                    {allowlistRows.map((row) => (
                       <tr key={row.email} className="hover:bg-surface-container/50">
                         <td className="px-5 py-3 font-mono text-xs text-on-surface">
                           {row.email}
@@ -357,6 +426,12 @@ export default async function AdminPage({
                 Danh sách đang trống.
               </p>
             )}
+
+            <Pagination
+              page={allowlistPage}
+              totalPages={allowlistPages}
+              hrefForPage={(page) => tabHref("allowlist", page)}
+            />
           </Card>
         </div>
       ) : null}
@@ -377,7 +452,7 @@ export default async function AdminPage({
             </Badge>
           </div>
 
-          {accessRequests.length > 0 ? (
+          {requestRows.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[980px] text-sm">
                 <thead>
@@ -391,7 +466,7 @@ export default async function AdminPage({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant">
-                  {accessRequests.map((request) => (
+                  {requestRows.map((request) => (
                     <tr
                       key={request.id}
                       className="hover:bg-surface-container/50"
@@ -491,6 +566,12 @@ export default async function AdminPage({
               Chưa có yêu cầu truy cập.
             </p>
           )}
+
+          <Pagination
+            page={requestsPage}
+            totalPages={requestsPages}
+            hrefForPage={(page) => tabHref("requests", page)}
+          />
         </Card>
       ) : null}
 
@@ -500,10 +581,10 @@ export default async function AdminPage({
             <div>
               <h2 className="text-lg font-medium text-on-surface">Thí sinh</h2>
               <p className="mt-1 text-sm text-on-surface-variant">
-                {profiles?.length ?? 0} hồ sơ đã đăng nhập.
+                {participantsTotal} hồ sơ đã đăng nhập.
               </p>
             </div>
-            <Badge tone="primary">{profiles?.length ?? 0}</Badge>
+            <Badge tone="primary">{participantsTotal}</Badge>
           </div>
 
           {profiles && profiles.length > 0 ? (
@@ -576,6 +657,12 @@ export default async function AdminPage({
               Chưa có thí sinh nào đăng nhập.
             </p>
           )}
+
+          <Pagination
+            page={participantsPage}
+            totalPages={participantsPages}
+            hrefForPage={(page) => tabHref("participants", page)}
+          />
         </Card>
       ) : null}
 
@@ -643,7 +730,7 @@ export default async function AdminPage({
                 Danh sách đội
               </h2>
               <p className="mt-1 text-sm text-on-surface-variant">
-                {teams?.length ?? 0} đội. Khóa đội sẽ chặn thêm thành viên.
+                {teamsTotal} đội. Khóa đội sẽ chặn thêm thành viên.
               </p>
             </div>
           </div>
@@ -846,6 +933,12 @@ export default async function AdminPage({
               Chưa có đội nào.
             </p>
           )}
+
+          <Pagination
+            page={teamsPage}
+            totalPages={teamsPages}
+            hrefForPage={(page) => tabHref("teams", page)}
+          />
         </Card>
       ) : null}
 
