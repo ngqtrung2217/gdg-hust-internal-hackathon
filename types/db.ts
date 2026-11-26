@@ -99,6 +99,7 @@ export interface Team {
   max_members: number;
   status: TeamStatus;
   recruiting: boolean;
+  code: string;
   invite_code: string;
   created_at: string;
   updated_at: string;
