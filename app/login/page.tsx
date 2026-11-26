@@ -86,7 +86,7 @@ export default async function LoginPage({
           </form>
 
           <p className="mt-4 text-xs leading-5 text-on-surface-variant">
-            Không có đăng ký công khai.
+            Liên hệ BTC nếu gặp lỗi.
           </p>
         </Card>
       </main>
