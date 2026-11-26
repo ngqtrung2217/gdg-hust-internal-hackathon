@@ -3,12 +3,15 @@ import Link from "next/link";
 import { ArrowLeft, LogOut, ShieldCheck } from "lucide-react";
 import { GoogleStripe } from "@/components/google-stripe";
 import { signOutAction } from "@/lib/actions/auth";
+import { AdminNav } from "./admin-nav";
 
 export function AdminShell({
   email,
+  pendingRequestCount,
   children,
 }: {
   email: string;
+  pendingRequestCount: number;
   children: React.ReactNode;
 }) {
   return (
@@ -68,13 +71,17 @@ export function AdminShell({
       </header>
 
       <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        {children}
+        <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
+          <aside className="lg:sticky lg:top-24 lg:self-start">
+            <AdminNav pendingRequestCount={pendingRequestCount} />
+          </aside>
+          <div className="min-w-0">{children}</div>
+        </div>
       </main>
 
       <footer className="border-t border-outline-variant">
-        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-2 px-4 py-6 text-xs text-on-surface-variant sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <span>BTC Console · GDG-HUST Internal Hackathon 2026</span>
-          <span>Mọi thao tác được kiểm tra quyền admin ở server.</span>
+        <div className="mx-auto w-full max-w-[1400px] px-4 py-6 text-xs text-on-surface-variant sm:px-6 lg:px-8">
+          BTC Console · GDG-HUST Internal Hackathon 2026
         </div>
       </footer>
     </div>

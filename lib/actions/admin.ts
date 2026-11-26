@@ -205,24 +205,24 @@ export async function deleteAnnouncementAction(formData: FormData) {
   const { supabase } = await requireAdmin();
   const id = z.string().uuid().safeParse(formData.get("id"));
 
-  if (!id.success) redirect("/admin?tab=announcements&error=1");
+  if (!id.success) redirect("/admin/announcements?error=1");
 
   const { error } = await supabase.rpc("admin_delete_announcement", {
     p_id: id.data,
   });
 
-  if (error) redirect("/admin?tab=announcements&error=1");
+  if (error) redirect("/admin/announcements?error=1");
 
   revalidatePath("/admin");
   revalidatePath("/overview");
-  redirect("/admin?tab=announcements&ok=1");
+  redirect("/admin/announcements?ok=1");
 }
 
 export async function setTeamLockedAction(formData: FormData) {
   const { supabase } = await requireAdmin();
   const teamId = z.string().uuid().safeParse(formData.get("team_id"));
 
-  if (!teamId.success) redirect("/admin?tab=teams&error=1");
+  if (!teamId.success) redirect("/admin/teams?error=1");
 
   const locked = formData.get("locked") === "true";
 
@@ -231,11 +231,11 @@ export async function setTeamLockedAction(formData: FormData) {
     p_locked: locked,
   });
 
-  if (error) redirect("/admin?tab=teams&error=1");
+  if (error) redirect("/admin/teams?error=1");
 
   revalidatePath("/admin");
   revalidatePath("/teams");
-  redirect("/admin?tab=teams&ok=1");
+  redirect("/admin/teams?ok=1");
 }
 
 export async function saveAllowlistAction(formData: FormData) {
@@ -250,15 +250,15 @@ export async function saveAllowlistAction(formData: FormData) {
   const active = formData.get("active") === "on";
 
   if (!EMAIL_RE.test(email)) {
-    redirect("/admin?tab=allowlist&error=1");
+    redirect("/admin/allowlist?error=1");
   }
 
   if (cohort && !/^K[0-9]{2,3}$/.test(cohort)) {
-    redirect("/admin?tab=allowlist&error=1");
+    redirect("/admin/allowlist?error=1");
   }
 
   if (role !== "admin" && role !== "participant") {
-    redirect("/admin?tab=allowlist&error=1");
+    redirect("/admin/allowlist?error=1");
   }
 
   const { error } = await supabase.rpc("admin_upsert_allowlist", {
@@ -272,11 +272,11 @@ export async function saveAllowlistAction(formData: FormData) {
   });
 
   if (error) {
-    redirect("/admin?tab=allowlist&error=1");
+    redirect("/admin/allowlist?error=1");
   }
 
   revalidatePath("/admin");
-  redirect("/admin?tab=allowlist&ok=1");
+  redirect("/admin/allowlist?ok=1");
 }
 
 export async function deleteAllowlistAction(formData: FormData) {
@@ -284,7 +284,7 @@ export async function deleteAllowlistAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
 
   if (!EMAIL_RE.test(email)) {
-    redirect("/admin?tab=allowlist&error=1");
+    redirect("/admin/allowlist?error=1");
   }
 
   const { error } = await supabase.rpc("admin_delete_allowlist", {
@@ -292,11 +292,11 @@ export async function deleteAllowlistAction(formData: FormData) {
   });
 
   if (error) {
-    redirect("/admin?tab=allowlist&error=1");
+    redirect("/admin/allowlist?error=1");
   }
 
   revalidatePath("/admin");
-  redirect("/admin?tab=allowlist&ok=1");
+  redirect("/admin/allowlist?ok=1");
 }
 
 export async function deleteTeamAction(formData: FormData) {
@@ -304,7 +304,7 @@ export async function deleteTeamAction(formData: FormData) {
   const teamId = z.string().uuid().safeParse(formData.get("team_id"));
 
   if (!teamId.success) {
-    redirect("/admin?tab=teams&error=1");
+    redirect("/admin/teams?error=1");
   }
 
   const { error } = await supabase.rpc("admin_delete_team", {
@@ -312,13 +312,13 @@ export async function deleteTeamAction(formData: FormData) {
   });
 
   if (error) {
-    redirect("/admin?tab=teams&error=1");
+    redirect("/admin/teams?error=1");
   }
 
   revalidatePath("/admin");
   revalidatePath("/teams");
   revalidatePath("/team");
-  redirect("/admin?tab=teams&ok=1");
+  redirect("/admin/teams?ok=1");
 }
 
 export async function updateAnnouncementAction(
@@ -368,7 +368,7 @@ export async function adminTransferLeaderAction(formData: FormData) {
   const newLeaderId = z.string().uuid().safeParse(formData.get("new_leader_id"));
 
   if (!teamId.success || !newLeaderId.success) {
-    redirect("/admin?tab=teams&error=1");
+    redirect("/admin/teams?error=1");
   }
 
   const { error } = await supabase.rpc("admin_transfer_team_leadership", {
@@ -377,12 +377,12 @@ export async function adminTransferLeaderAction(formData: FormData) {
   });
 
   if (error) {
-    redirect("/admin?tab=teams&error=1");
+    redirect("/admin/teams?error=1");
   }
 
   revalidatePath("/admin");
   revalidatePath("/team");
-  redirect("/admin?tab=teams&ok=1");
+  redirect("/admin/teams?ok=1");
 }
 
 export async function adminRemoveMemberAction(formData: FormData) {
@@ -391,7 +391,7 @@ export async function adminRemoveMemberAction(formData: FormData) {
   const userId = z.string().uuid().safeParse(formData.get("user_id"));
 
   if (!teamId.success || !userId.success) {
-    redirect("/admin?tab=teams&error=1");
+    redirect("/admin/teams?error=1");
   }
 
   const { error } = await supabase.rpc("admin_remove_team_member", {
@@ -400,14 +400,14 @@ export async function adminRemoveMemberAction(formData: FormData) {
   });
 
   if (error) {
-    redirect("/admin?tab=teams&error=1");
+    redirect("/admin/teams?error=1");
   }
 
   revalidatePath("/admin");
   revalidatePath("/team");
   revalidatePath("/teams");
   revalidatePath("/participants");
-  redirect("/admin?tab=teams&ok=1");
+  redirect("/admin/teams?ok=1");
 }
 
 export async function approveAccessRequestAction(formData: FormData) {
@@ -416,7 +416,7 @@ export async function approveAccessRequestAction(formData: FormData) {
   const role = String(formData.get("role") ?? "participant");
 
   if (!id.success || (role !== "participant" && role !== "admin")) {
-    redirect("/admin?tab=requests&error=1");
+    redirect("/admin/requests?error=1");
   }
 
   const { error } = await supabase.rpc("admin_approve_access_request", {
@@ -425,11 +425,11 @@ export async function approveAccessRequestAction(formData: FormData) {
   });
 
   if (error) {
-    redirect("/admin?tab=requests&error=1");
+    redirect("/admin/requests?error=1");
   }
 
   revalidatePath("/admin");
-  redirect("/admin?tab=requests&ok=1");
+  redirect("/admin/requests?ok=1");
 }
 
 export async function rejectAccessRequestAction(formData: FormData) {
@@ -437,7 +437,7 @@ export async function rejectAccessRequestAction(formData: FormData) {
   const id = z.string().uuid().safeParse(formData.get("id"));
 
   if (!id.success) {
-    redirect("/admin?tab=requests&error=1");
+    redirect("/admin/requests?error=1");
   }
 
   const { error } = await supabase.rpc("admin_reject_access_request", {
@@ -445,11 +445,11 @@ export async function rejectAccessRequestAction(formData: FormData) {
   });
 
   if (error) {
-    redirect("/admin?tab=requests&error=1");
+    redirect("/admin/requests?error=1");
   }
 
   revalidatePath("/admin");
-  redirect("/admin?tab=requests&ok=1");
+  redirect("/admin/requests?ok=1");
 }
 
 export async function adminSetRecruitingAction(formData: FormData) {
@@ -458,7 +458,7 @@ export async function adminSetRecruitingAction(formData: FormData) {
   const recruiting = formData.get("recruiting") === "true";
 
   if (!teamId.success) {
-    redirect("/admin?tab=teams&error=1");
+    redirect("/admin/teams?error=1");
   }
 
   const { error } = await supabase.rpc("set_team_recruiting", {
@@ -467,11 +467,11 @@ export async function adminSetRecruitingAction(formData: FormData) {
   });
 
   if (error) {
-    redirect("/admin?tab=teams&error=1");
+    redirect("/admin/teams?error=1");
   }
 
   revalidatePath("/admin");
   revalidatePath("/team");
   revalidatePath("/teams");
-  redirect("/admin?tab=teams&ok=1");
+  redirect("/admin/teams?ok=1");
 }

@@ -108,8 +108,14 @@ app/
     participants/page.tsx       Browse participants open to invites
     profile/page.tsx            Edit profile and skills
   admin/
-    layout.tsx                  Separate BTC shell + admin guard
-    page.tsx                    BTC console (settings, allowlist, announcements, teams)
+    layout.tsx                  Separate BTC shell + admin guard + sidebar nav
+    page.tsx                    BTC overview dashboard
+    settings/page.tsx           Event settings
+    allowlist/page.tsx          Access allowlist
+    requests/page.tsx           Pending access requests
+    participants/page.tsx       Participant table
+    announcements/page.tsx      Announcement management
+    teams/page.tsx              Team management
 components/
   ui/                           Primitives: button, input, card, markdown…
   admin/                        Settings, import, announcement forms
