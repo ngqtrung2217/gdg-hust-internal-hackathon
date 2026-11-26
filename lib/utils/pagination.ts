@@ -10,3 +10,18 @@ export function resolvePage(
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   return { page: Math.min(requested, totalPages), totalPages };
 }
+
+// Build a pagination link that keeps the active filters.
+export function buildPageHref(
+  basePath: string,
+  values: Record<string, string | undefined>,
+  page: number,
+) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(values)) {
+    if (value) search.set(key, value);
+  }
+  if (page > 1) search.set("page", String(page));
+  const query = search.toString();
+  return `${basePath}${query ? `?${query}` : ""}`;
+}

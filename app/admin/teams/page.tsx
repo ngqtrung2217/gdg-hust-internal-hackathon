@@ -16,22 +16,39 @@ import { Pagination } from "@/components/ui/pagination";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FlashToast } from "@/components/flash-toast";
 import { formatDateTime } from "@/lib/utils/date";
-import { resolvePage } from "@/lib/utils/pagination";
+import { buildPageHref, resolvePage } from "@/lib/utils/pagination";
 import { ilikePattern, searchTerm } from "@/lib/utils/search";
 import type { AdminTeam } from "@/types/admin";
+import type { TeamStatus } from "@/types/db";
 
 export const metadata: Metadata = { title: "Đội thi" };
 
 const PAGE_SIZE = 20;
 
+const TEAM_STATUSES: TeamStatus[] = ["open", "full", "locked", "archived"];
+
 export default async function AdminTeamsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string; ok?: string; error?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    recruiting?: string;
+    page?: string;
+    ok?: string;
+    error?: string;
+  }>;
 }) {
   const { supabase } = await requireAdmin();
   const params = await searchParams;
   const q = searchTerm(params.q);
+  const statusFilter = TEAM_STATUSES.includes(params.status as TeamStatus)
+    ? (params.status as TeamStatus)
+    : undefined;
+  const recruitingFilter =
+    params.recruiting === "true" || params.recruiting === "false"
+      ? params.recruiting
+      : "";
   const filter = q
     ? `name.ilike."${ilikePattern(q)}",code.ilike."${ilikePattern(q)}"`
     : null;
@@ -42,9 +59,19 @@ export default async function AdminTeamsPage({
   let dataQuery = supabase
     .from("teams")
     .select(
-      "id, name, status, recruiting, max_members, code, created_at, leader_id, leader:profiles!teams_leader_id_fkey(full_name), team_members(user_id, role, profile:profiles(full_name))",
+      "id, name, status, recruiting, max_members, code, created_at, leader_id, leader:profiles!teams_leader_id_fkey(full_name, email), team_members(user_id, role, profile:profiles(full_name, email))",
     )
     .order("created_at", { ascending: false });
+
+  if (statusFilter) {
+    countQuery = countQuery.eq("status", statusFilter);
+    dataQuery = dataQuery.eq("status", statusFilter);
+  }
+
+  if (recruitingFilter) {
+    countQuery = countQuery.eq("recruiting", recruitingFilter === "true");
+    dataQuery = dataQuery.eq("recruiting", recruitingFilter === "true");
+  }
 
   if (filter) {
     countQuery = countQuery.or(filter);
@@ -59,13 +86,12 @@ export default async function AdminTeamsPage({
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
     .returns<AdminTeam[]>();
 
-  const pageHref = (target: number) => {
-    const search = new URLSearchParams();
-    if (q) search.set("q", q);
-    if (target > 1) search.set("page", String(target));
-    const query = search.toString();
-    return `/admin/teams${query ? `?${query}` : ""}`;
-  };
+  const pageHref = (target: number) =>
+    buildPageHref(
+      "/admin/teams",
+      { q, status: statusFilter, recruiting: recruitingFilter },
+      target,
+    );
 
   return (
     <div className="space-y-6">
@@ -83,6 +109,30 @@ export default async function AdminTeamsPage({
         q={q}
         placeholder="Tìm theo tên đội hoặc mã đội"
         clearHref="/admin/teams"
+        filters={[
+          {
+            name: "status",
+            label: "Trạng thái",
+            value: statusFilter ?? "",
+            options: [
+              { value: "", label: "Tất cả trạng thái" },
+              { value: "open", label: "Đang tuyển" },
+              { value: "full", label: "Đã đủ" },
+              { value: "locked", label: "Đã khóa" },
+              { value: "archived", label: "Lưu trữ" },
+            ],
+          },
+          {
+            name: "recruiting",
+            label: "Tuyển",
+            value: recruitingFilter,
+            options: [
+              { value: "", label: "Tất cả" },
+              { value: "true", label: "Đang mở" },
+              { value: "false", label: "Tạm dừng" },
+            ],
+          },
+        ]}
       />
 
       <Card className="overflow-hidden">
@@ -97,6 +147,7 @@ export default async function AdminTeamsPage({
               <thead>
                 <tr className="border-b border-outline-variant bg-surface-container/60 text-left text-xs text-on-surface-variant">
                   <th scope="col" className="px-5 py-3 font-medium">Đội</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Mã</th>
                   <th scope="col" className="px-5 py-3 font-medium">Đội trưởng</th>
                   <th scope="col" className="px-5 py-3 font-medium">Thành viên</th>
                   <th scope="col" className="px-5 py-3 font-medium">Trạng thái</th>
@@ -112,11 +163,6 @@ export default async function AdminTeamsPage({
                       <td className="px-5 py-3">
                         <p className="font-medium text-on-surface">{team.name}</p>
                         <p className="text-xs text-on-surface-variant">
-                          Mã{" "}
-                          <span className="select-all font-mono tracking-widest text-on-surface">
-                            {team.code}
-                          </span>
-                          {" · "}
                           {formatDateTime(team.created_at)}
                         </p>
                         <details className="mt-1">
@@ -136,6 +182,11 @@ export default async function AdminTeamsPage({
                                   <span>
                                     {name}
                                     {isLeader ? " · đội trưởng" : ""}
+                                    {member.profile?.email ? (
+                                      <span className="block font-mono">
+                                        {member.profile.email}
+                                      </span>
+                                    ) : null}
                                   </span>
                                   {isLeader && memberCount > 1 ? (
                                     <span className="text-[11px]">
@@ -203,8 +254,18 @@ export default async function AdminTeamsPage({
                           ) : null}
                         </details>
                       </td>
+                      <td className="px-5 py-3">
+                        <span className="select-all font-mono tracking-widest text-on-surface">
+                          {team.code}
+                        </span>
+                      </td>
                       <td className="px-5 py-3 text-on-surface-variant">
-                        {team.leader?.full_name ?? "—"}
+                        <p className="text-on-surface">
+                          {team.leader?.full_name ?? "—"}
+                        </p>
+                        {team.leader?.email ? (
+                          <p className="font-mono text-xs">{team.leader.email}</p>
+                        ) : null}
                       </td>
                       <td className="px-5 py-3 font-mono tabular-nums text-on-surface">
                         {memberCount}/{team.max_members}

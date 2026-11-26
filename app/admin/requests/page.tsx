@@ -3,6 +3,7 @@ import {
   approveAccessRequestAction,
   rejectAccessRequestAction,
 } from "@/lib/actions/admin";
+import { AdminSearch } from "@/components/admin/admin-search";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -11,7 +12,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FlashToast } from "@/components/flash-toast";
 import { formatDateTime } from "@/lib/utils/date";
-import { resolvePage } from "@/lib/utils/pagination";
+import { buildPageHref, resolvePage } from "@/lib/utils/pagination";
 import type { AccessRequest } from "@/types/admin";
 
 export const metadata: Metadata = { title: "Yêu cầu truy cập" };
@@ -21,22 +22,34 @@ const PAGE_SIZE = 25;
 export default async function AdminRequestsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; ok?: string; error?: string }>;
+  searchParams: Promise<{ status?: string; page?: string; ok?: string; error?: string }>;
 }) {
   const { supabase } = await requireAdmin();
   const params = await searchParams;
+  const statusFilter =
+    params.status === "pending" ||
+    params.status === "approved" ||
+    params.status === "rejected"
+      ? params.status
+      : "";
 
   const { data } = await supabase.rpc("admin_list_access_requests");
-  const requests = (data as AccessRequest[] | null) ?? [];
-  const pendingRequestCount = requests.filter(
+  const allRequests = (data as AccessRequest[] | null) ?? [];
+  const pendingRequestCount = allRequests.filter(
     (request) => request.status === "pending",
   ).length;
+  const requests = statusFilter
+    ? allRequests.filter((request) => request.status === statusFilter)
+    : allRequests;
   const { page, totalPages } = resolvePage(
     params.page,
     requests.length,
     PAGE_SIZE,
   );
   const pageRows = requests.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const pageHref = (target: number) =>
+    buildPageHref("/admin/requests", { status: statusFilter }, target);
 
   return (
     <div className="space-y-6">
@@ -48,6 +61,26 @@ export default async function AdminRequestsPage({
           Yêu cầu truy cập
         </h1>
       </header>
+
+      <AdminSearch
+        action="/admin/requests"
+        placeholder=""
+        clearHref="/admin/requests"
+        showSearch={false}
+        filters={[
+          {
+            name: "status",
+            label: "Trạng thái",
+            value: statusFilter,
+            options: [
+              { value: "", label: "Tất cả trạng thái" },
+              { value: "pending", label: "Chờ duyệt" },
+              { value: "approved", label: "Đã duyệt" },
+              { value: "rejected", label: "Từ chối" },
+            ],
+          },
+        ]}
+      />
 
       <Card className="overflow-hidden">
         <div className="flex items-center justify-between gap-3 border-b border-outline-variant p-5">
@@ -156,15 +189,11 @@ export default async function AdminRequestsPage({
           </div>
         ) : (
           <p className="p-6 text-sm text-on-surface-variant">
-            Chưa có yêu cầu truy cập.
+            {statusFilter ? "Không có yêu cầu ở trạng thái này." : "Chưa có yêu cầu truy cập."}
           </p>
         )}
 
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          hrefForPage={(target) => `/admin/requests?page=${target}`}
-        />
+        <Pagination page={page} totalPages={totalPages} hrefForPage={pageHref} />
       </Card>
     </div>
   );

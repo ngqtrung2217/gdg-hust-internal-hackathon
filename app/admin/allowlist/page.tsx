@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Pagination } from "@/components/ui/pagination";
 import { FlashToast } from "@/components/flash-toast";
-import { resolvePage } from "@/lib/utils/pagination";
+import { buildPageHref, resolvePage } from "@/lib/utils/pagination";
 import { matchesTerm, searchTerm } from "@/lib/utils/search";
 import type { AllowlistRow } from "@/types/db";
 
@@ -18,29 +18,43 @@ const PAGE_SIZE = 25;
 export default async function AdminAllowlistPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string; ok?: string; error?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    role?: string;
+    status?: string;
+    page?: string;
+    ok?: string;
+    error?: string;
+  }>;
 }) {
   const { supabase } = await requireAdmin();
   const params = await searchParams;
   const q = searchTerm(params.q);
+  const roleFilter =
+    params.role === "participant" || params.role === "admin" ? params.role : "";
+  const statusFilter =
+    params.status === "active" || params.status === "locked"
+      ? params.status
+      : "";
 
   const { data } = await supabase.rpc("admin_list_allowlist");
   const allRows = (data as AllowlistRow[] | null) ?? [];
-  const rows = q
-    ? allRows.filter((row) =>
-        matchesTerm(q, row.email, row.full_name, row.major, row.cohort),
-      )
-    : allRows;
+  const rows = allRows.filter(
+    (row) =>
+      matchesTerm(q, row.email, row.full_name, row.major, row.cohort) &&
+      (!roleFilter || row.role === roleFilter) &&
+      (!statusFilter ||
+        (statusFilter === "active" ? row.active : !row.active)),
+  );
   const { page, totalPages } = resolvePage(params.page, rows.length, PAGE_SIZE);
   const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const pageHref = (target: number) => {
-    const search = new URLSearchParams();
-    if (q) search.set("q", q);
-    if (target > 1) search.set("page", String(target));
-    const query = search.toString();
-    return `/admin/allowlist${query ? `?${query}` : ""}`;
-  };
+  const pageHref = (target: number) =>
+    buildPageHref(
+      "/admin/allowlist",
+      { q, role: roleFilter, status: statusFilter },
+      target,
+    );
 
   return (
     <div className="space-y-6">
@@ -60,6 +74,28 @@ export default async function AdminAllowlistPage({
         q={q}
         placeholder="Tìm theo email, tên hoặc ngành"
         clearHref="/admin/allowlist"
+        filters={[
+          {
+            name: "role",
+            label: "Role",
+            value: roleFilter,
+            options: [
+              { value: "", label: "Tất cả role" },
+              { value: "participant", label: "Thí sinh" },
+              { value: "admin", label: "BTC" },
+            ],
+          },
+          {
+            name: "status",
+            label: "Trạng thái",
+            value: statusFilter,
+            options: [
+              { value: "", label: "Tất cả trạng thái" },
+              { value: "active", label: "Đang hoạt động" },
+              { value: "locked", label: "Đã khóa" },
+            ],
+          },
+        ]}
       />
 
       <Card className="overflow-hidden">
