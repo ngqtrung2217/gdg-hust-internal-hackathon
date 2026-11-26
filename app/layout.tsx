@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Roboto, Roboto_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ToastProvider } from "@/components/toast-provider";
 import "./globals.css";
 
@@ -37,6 +39,8 @@ export default function RootLayout({
       <body>
         {children}
         <ToastProvider />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
