@@ -54,11 +54,23 @@ type Membership = {
     id: string;
     name: string;
     status: TeamStatus;
+    recruiting: boolean;
     max_members: number;
     team_members: { count: number }[];
     team_join_requests: PendingRequest[];
   } | null;
 };
+
+function teamState(team: { status: TeamStatus; recruiting: boolean }) {
+  if (team.status === "full") return { label: "Đã đủ", tone: "success" as const };
+  if (team.status === "locked") return { label: "Đã khóa", tone: "error" as const };
+  if (team.status === "archived") {
+    return { label: "Lưu trữ", tone: "neutral" as const };
+  }
+  return team.recruiting
+    ? { label: "Đang tuyển", tone: "primary" as const }
+    : { label: "Tạm dừng tuyển", tone: "warning" as const };
+}
 
 type PendingInvite = {
   id: string;
@@ -121,7 +133,7 @@ export default async function OverviewPage({
     supabase
       .from("team_members")
       .select(
-        "team_id, role, team:teams(id, name, status, max_members, team_members(count), team_join_requests(id, user_id, message, status, created_at, profile:profiles!team_join_requests_user_id_fkey(full_name, avatar_url, department, subteam)))",
+        "team_id, role, team:teams(id, name, status, recruiting, max_members, team_members(count), team_join_requests(id, user_id, message, status, created_at, profile:profiles!team_join_requests_user_id_fkey(full_name, avatar_url, department, subteam)))",
       )
       .eq("user_id", profileId)
       .limit(1)
@@ -176,10 +188,6 @@ export default async function OverviewPage({
           <h1 className="mt-1 text-3xl font-medium tracking-tight text-on-surface sm:text-4xl">
             Tổng quan
           </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-on-surface-variant">
-            Thông báo từ BTC, deadline, lời mời và trạng thái đội của bạn ở một
-            nơi.
-          </p>
         </div>
         <Badge tone={settings?.teams_locked ? "error" : "primary"}>
           {settings?.teams_locked
@@ -264,8 +272,7 @@ export default async function OverviewPage({
 
           {team ? (
             <p className="text-xs leading-5 text-on-surface-variant">
-              Bạn đang ở trong một đội nên không thể nhận thêm lời mời. Rời đội
-              trước nếu muốn tham gia đội khác.
+              Bạn đã có đội. Rời đội trước khi nhận lời mời khác.
             </p>
           ) : null}
         </section>
@@ -282,12 +289,8 @@ export default async function OverviewPage({
                 <h2 className="text-lg font-medium text-on-surface">
                   {team.name}
                 </h2>
-                <Badge tone={team.status === "full" ? "success" : "primary"}>
-                  {team.status === "full"
-                    ? "Đã đủ"
-                    : team.status === "locked"
-                      ? "Đã khóa"
-                      : "Đang tuyển"}
+                <Badge tone={teamState(team).tone}>
+                  {teamState(team).label}
                 </Badge>
               </div>
               <p className="mt-1 text-sm text-on-surface-variant">
@@ -314,9 +317,6 @@ export default async function OverviewPage({
               <h2 className="text-lg font-medium text-on-surface">
                 Bạn chưa có đội
               </h2>
-              <p className="mt-1 text-sm leading-6 text-on-surface-variant">
-                Tạo đội mới hoặc tìm một đội đang tuyển trước khi BTC khóa.
-              </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -455,7 +455,7 @@ export default async function OverviewPage({
             <EmptyState
               icon={<Megaphone className="h-5 w-5" aria-hidden />}
               title="Chưa có thông báo"
-              description="BTC chưa đăng thông báo nào. Hãy quay lại sau."
+              description="BTC chưa đăng thông báo nào."
             />
           )}
         </section>
@@ -472,8 +472,8 @@ export default async function OverviewPage({
               </div>
               <p className="mt-2 text-xs leading-5 text-on-surface-variant">
                 {!profileReady
-                  ? "Cập nhật Ban và Mảng để có thể tạo hoặc tham gia đội."
-                  : "Thêm ít nhất một kỹ năng để đội khác dễ tìm thấy bạn."}
+                  ? "Cập nhật Ban và Mảng để vào đội."
+                  : "Thêm ít nhất một kỹ năng để đội khác tìm thấy bạn."}
               </p>
               <Link
                 href="/profile"
@@ -529,8 +529,7 @@ export default async function OverviewPage({
               {formatDateTime(settings?.team_creation_deadline)}
             </p>
             <p className="mt-3 text-xs leading-5 text-on-surface-variant">
-              Đội gồm 3–5 người, tối đa 3 Developer và 2 Marcom/Operation. Sau
-              deadline, BTC có thể khóa toàn bộ thao tác đội.
+              3–5 người · tối đa 3 Dev, 2 Marcom/Operation.
             </p>
           </Card>
 

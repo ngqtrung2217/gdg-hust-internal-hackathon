@@ -519,6 +519,7 @@ export async function setRecruitingAction(formData: FormData) {
 
   revalidatePath("/team");
   revalidatePath("/teams");
+  revalidatePath("/overview");
   revalidatePath("/admin");
   back("/team", "ok", recruiting ? "Đã mở tuyển." : "Đã tạm dừng tuyển.");
 }

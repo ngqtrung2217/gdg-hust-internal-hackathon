@@ -22,6 +22,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { FlashToast } from "@/components/flash-toast";
 import { MAX_PENDING_JOIN_REQUESTS } from "@/lib/constants";
 import { formatDateTime } from "@/lib/utils/date";
+import { shuffle } from "@/lib/utils/random";
 import type { Profile, TeamStatus } from "@/types/db";
 
 
@@ -134,6 +135,7 @@ export default async function TeamsPage({
     ]);
 
   const membership = memberships?.[0];
+  const openTeams = shuffle(teams ?? []);
   const ownProfile = ownProfiles?.[0];
   const profileReady = Boolean(ownProfile?.department && ownProfile?.subteam);
   const pendingTeamIds = new Set(
@@ -161,19 +163,14 @@ export default async function TeamsPage({
         <h1 className="mt-1 text-3xl font-medium tracking-tight text-on-surface sm:text-4xl">
           Tìm đội đang tuyển
         </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-on-surface-variant">
-          Gửi đơn kèm lời nhắn. Đội trưởng sẽ duyệt hoặc từ chối. Bạn chỉ có thể
-          ở trong một đội. Đội gồm 3–5 người, tối đa 3 Developer và 2
-          Marcom/Operation.
-        </p>
       </header>
 
       {!membership && joinQuotaLeft === 0 ? (
         <div className="flex flex-wrap items-center gap-3 rounded-xl bg-warning-container p-4 text-sm text-on-warning-container">
           <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
           <span>
-            Bạn đã có {MAX_PENDING_JOIN_REQUESTS} đơn đang chờ duyệt. Huỷ bớt
-            hoặc đợi phản hồi trước khi gửi thêm.
+            Bạn đã có {MAX_PENDING_JOIN_REQUESTS} đơn chờ duyệt. Huỷ bớt để gửi
+            thêm.
           </span>
         </div>
       ) : null}
@@ -182,7 +179,7 @@ export default async function TeamsPage({
         <div className="flex flex-wrap items-center gap-3 rounded-xl bg-warning-container p-4 text-sm text-on-warning-container">
           <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
           <span>
-            Cập nhật Ban và Mảng trong hồ sơ trước khi gửi đơn xin vào đội.
+            Cập nhật Ban và Mảng trước khi gửi đơn.
           </span>
           <Link
             href="/profile"
@@ -199,7 +196,7 @@ export default async function TeamsPage({
             Lời mời vào đội
           </h2>
           <p className="mt-1 text-sm leading-6 text-on-surface-variant">
-            Chấp nhận một lời mời để vào đội. Bạn chỉ có thể ở một đội.
+            Chấp nhận một lời mời để vào đội.
           </p>
           <ul className="mt-3 space-y-4">
             {pendingInvites.map((invite) => {
@@ -350,9 +347,9 @@ export default async function TeamsPage({
         </Card>
       ) : null}
 
-      {teams && teams.length > 0 ? (
+      {openTeams.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
-          {teams.map((team) => {
+          {openTeams.map((team) => {
             const count = team.team_members?.length ?? 0;
             const isPending = pendingTeamIds.has(team.id);
             const isFull = count >= team.max_members;
@@ -406,11 +403,11 @@ export default async function TeamsPage({
                 <div className="mt-4">
                   {membership ? (
                     <p className="rounded-xl bg-surface-container px-3 py-2 text-xs leading-5 text-on-surface-variant">
-                      Bạn đã ở trong một đội. Vào{" "}
+                      Bạn đã có đội. Quản lý ở{" "}
                       <Link href="/team" className="font-medium text-primary">
                         Đội của tôi
-                      </Link>{" "}
-                      để quản lý.
+                      </Link>
+                      .
                     </p>
                   ) : isPending ? (
                     <div className="space-y-2">
@@ -481,7 +478,6 @@ export default async function TeamsPage({
         <EmptyState
           icon={<Search className="h-5 w-5" aria-hidden />}
           title="Chưa có đội nào đang tuyển"
-          description="Bạn có thể tạo đội mới và mời đồng đội."
           action={
             <Link href="/team" className={buttonClass({ size: "sm" })}>
               Tạo đội

@@ -94,9 +94,6 @@ export function ProfileForm({
 
         <Card className="p-6">
           <h2 className="text-lg font-medium text-on-surface">Thông tin cơ bản</h2>
-          <p className="mt-1 text-sm text-on-surface-variant">
-            Email và ảnh đại diện lấy từ Google, không chỉnh sửa tại đây.
-          </p>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <Field
@@ -210,16 +207,10 @@ export function ProfileForm({
             </Field>
           </div>
 
-          <p className="mt-4 rounded-lg bg-surface-container px-3 py-2 text-xs leading-5 text-on-surface-variant">
-            Đội gồm 3–5 người, tối đa 3 Developer và 1–2 Marcom/Operation.
-          </p>
         </Card>
 
         <Card className="p-6">
           <h2 className="text-lg font-medium text-on-surface">Giới thiệu</h2>
-          <p className="mt-1 text-sm text-on-surface-variant">
-            Ngắn gọn, cụ thể. Đội khác đọc phần này để quyết định mời bạn.
-          </p>
 
           <div className="mt-5 space-y-4">
             <Field
@@ -254,9 +245,6 @@ export function ProfileForm({
 
         <Card className="p-6">
           <h2 className="text-lg font-medium text-on-surface">Liên hệ</h2>
-          <p className="mt-1 text-sm text-on-surface-variant">
-            Chỉ người đã đăng nhập mới thấy các thông tin này.
-          </p>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <Field
@@ -306,10 +294,6 @@ export function ProfileForm({
 
         <Card className="p-6">
           <h2 className="text-lg font-medium text-on-surface">Kỹ năng</h2>
-          <p className="mt-1 text-sm text-on-surface-variant">
-            Chọn tối đa 5 kỹ năng từ danh mục BTC. Mức 1 là mới bắt đầu, 5 là
-            thành thạo.
-          </p>
 
           <div className="mt-5">
             <SkillEditor catalog={catalog} initial={initialSkills} />
@@ -327,7 +311,7 @@ export function ProfileForm({
                 Đang tìm đội
               </span>
               <span className="mt-0.5 block text-xs leading-5 text-on-surface-variant">
-                Hiện hồ sơ của bạn trong danh sách để đội trưởng gửi lời mời.
+                Hiện trong danh sách tìm đồng đội.
               </span>
             </span>
           </label>
@@ -379,9 +363,6 @@ export function ProfileForm({
           <SubmitButton className="mt-6 w-full" pendingText="Đang lưu…">
             Lưu hồ sơ
           </SubmitButton>
-          <p className="mt-3 text-center text-xs leading-5 text-on-surface-variant">
-            Thay đổi được lưu ngay và hiển thị cho các đội khác.
-          </p>
         </Card>
 
         <Button

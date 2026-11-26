@@ -84,13 +84,13 @@ export default async function JoinPage({
           <p className="mt-2 text-sm leading-6 text-on-surface-variant">
             {invite && invite.joinable
               ? signedIn
-                ? "Bấm tham gia để vào đội. Mỗi người chỉ thuộc một đội."
-                : "Đăng nhập bằng email BTC đã duyệt để tham gia đội này."
+                ? "Bấm tham gia để vào đội."
+                : "Đăng nhập bằng email đã được BTC duyệt."
               : invite
                 ? "Hiện chưa thể tham gia đội này."
                 : previewFailed
                   ? "Không tải được thông tin đội, nhưng bạn vẫn có thể thử tham gia."
-                  : "Đăng nhập bằng đúng email đã được BTC duyệt để nhận lời mời."}
+                  : "Đăng nhập bằng email đã được BTC duyệt."}
           </p>
 
           {invite ? (
@@ -137,8 +137,8 @@ export default async function JoinPage({
             <Alert className="mt-5">
               <AlertCircle className="h-4 w-4" aria-hidden />
               <AlertDescription>
-                Link không hợp lệ, đã hết hạn, hoặc đội đã đủ người. Liên hệ đội
-                trưởng để lấy link mới.
+                Link không hợp lệ hoặc đã hết hạn. Liên hệ đội trưởng để lấy
+                link mới.
               </AlertDescription>
             </Alert>
           ) : query.error ? (
@@ -152,8 +152,7 @@ export default async function JoinPage({
           ) : invite && !invite.joinable ? (
             <div className="mt-5 flex gap-2 rounded-lg bg-warning-container p-3 text-sm leading-6 text-on-warning-container">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-              Đội hiện chưa thể nhận thêm thành viên. Liên hệ đội trưởng nếu bạn
-              cho rằng đây là nhầm lẫn.
+              Đội hiện chưa nhận thêm thành viên.
             </div>
           ) : previewFailed ? (
             <div className="mt-5 flex gap-2 rounded-lg bg-warning-container p-3 text-sm leading-6 text-on-warning-container">
@@ -190,7 +189,7 @@ export default async function JoinPage({
 
           <div className="mt-6 flex items-start gap-2 rounded-lg bg-surface-container p-3 text-xs leading-5 text-on-surface-variant">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-            Link mời có thể hết hạn hoặc dừng khi đội đã đủ người.
+            Link mời có thể hết hạn.
           </div>
         </Card>
       </main>

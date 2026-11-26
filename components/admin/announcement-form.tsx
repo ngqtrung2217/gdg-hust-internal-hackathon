@@ -22,7 +22,7 @@ export function AnnouncementForm() {
     <Card className="p-6">
       <h2 className="text-lg font-medium text-on-surface">Đăng thông báo</h2>
       <p className="mt-1 text-sm leading-6 text-on-surface-variant">
-        Markdown có link inline. HTML thô bị loại bỏ khi render.
+        Markdown, link inline.
       </p>
 
       {state.message ? (

@@ -32,8 +32,7 @@ export default async function DashboardLayout({
           Chưa tìm thấy hồ sơ
         </h1>
         <p className="mt-3 text-sm leading-6 text-on-surface-variant">
-          Phiên đăng nhập đã hết hạn hoặc hồ sơ chưa được khởi tạo. Hãy đăng
-          nhập lại bằng Google.
+          Phiên đăng nhập đã hết hạn. Đăng nhập lại bằng Google.
         </p>
         <form action={signOutAction} className="mt-6">
           <Button type="submit" variant="outline">

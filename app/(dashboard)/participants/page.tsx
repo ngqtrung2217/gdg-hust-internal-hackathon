@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FlashToast } from "@/components/flash-toast";
 import { MAX_PENDING_INVITES } from "@/lib/constants";
 import { isPast } from "@/lib/utils/date";
+import { shuffle } from "@/lib/utils/random";
 import type { ProfileWithSkills, TeamStatus } from "@/types/db";
 
 
@@ -59,8 +60,8 @@ export default async function ParticipantsPage({
   const isLeader = membership?.role === "leader";
 
   const taken = new Set((allMembers ?? []).map((row) => row.user_id));
-  const candidates = (profiles ?? []).filter(
-    (profile) => !taken.has(profile.id),
+  const candidates = shuffle(
+    (profiles ?? []).filter((profile) => !taken.has(profile.id)),
   );
 
   const { data: invites } = team
@@ -96,9 +97,7 @@ export default async function ParticipantsPage({
           Tìm đồng đội
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-on-surface-variant">
-          Những thí sinh đang mở nhận lời mời và chưa thuộc đội nào. Chỉ đội
-          trưởng mới gửi được lời mời. Mỗi đội tối đa 3 Developer và 2
-          Marcom/Operation.
+          Chỉ đội trưởng gửi được lời mời.
         </p>
       </header>
 
@@ -162,7 +161,6 @@ export default async function ParticipantsPage({
         <EmptyState
           icon={<UsersRound className="h-5 w-5" aria-hidden />}
           title="Chưa có ai đang tìm đội"
-          description="Khi thí sinh bật “Đang tìm đội”, hồ sơ sẽ xuất hiện ở đây."
         />
       )}
     </div>

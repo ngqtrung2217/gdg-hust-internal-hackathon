@@ -130,8 +130,7 @@ export function SkillEditor({
             Chưa chọn kỹ năng
           </p>
           <p className="mt-1 text-sm leading-6 text-on-surface-variant">
-            Thêm tối đa {MAX_PROFILE_SKILLS} kỹ năng để đội khác biết bạn mạnh ở
-            đâu.
+            Thêm tối đa {MAX_PROFILE_SKILLS} kỹ năng.
           </p>
         </div>
       ) : (
@@ -288,8 +287,7 @@ export function SkillEditor({
 
       {rows.length >= MAX_PROFILE_SKILLS ? (
         <p className="text-xs leading-5 text-on-surface-variant">
-          Bạn đã chọn tối đa {MAX_PROFILE_SKILLS} kỹ năng. Bỏ bớt một kỹ năng để
-          thay đổi.
+          Đã chọn tối đa {MAX_PROFILE_SKILLS} kỹ năng. Bỏ bớt để thay đổi.
         </p>
       ) : null}
     </div>

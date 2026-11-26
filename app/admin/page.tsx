@@ -247,8 +247,7 @@ export default async function AdminPage({
             Quản trị cuộc thi
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-on-surface-variant">
-            Cấu hình, danh sách truy cập, thông báo và trạng thái đội. Mọi thao
-            tác được kiểm tra quyền admin ở server.
+            Cấu hình cuộc thi, danh sách truy cập, thông báo và đội.
           </p>
         </div>
         <Badge tone={settings.allowlist_mode ? "primary" : "warning"}>
@@ -367,7 +366,7 @@ export default async function AdminPage({
                   Danh sách truy cập
                 </h2>
                 <p className="mt-1 text-sm text-on-surface-variant">
-                  {allowlistTotal} email. Admin cũng phải nằm trong danh sách.
+                  {allowlistTotal} email.
                 </p>
               </div>
               <Badge tone="neutral">{allowlistTotal}</Badge>
@@ -730,7 +729,7 @@ export default async function AdminPage({
                 Danh sách đội
               </h2>
               <p className="mt-1 text-sm text-on-surface-variant">
-                {teamsTotal} đội. Khóa đội sẽ chặn thêm thành viên.
+                {teamsTotal} đội.
               </p>
             </div>
           </div>
