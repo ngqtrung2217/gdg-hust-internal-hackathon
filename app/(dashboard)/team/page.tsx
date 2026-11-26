@@ -33,6 +33,7 @@ import {
   DEPARTMENT_OPTIONS,
   MAX_DEVELOPERS_PER_TEAM,
   MAX_MARCOM_OPERATION_PER_TEAM,
+  MAX_PENDING_INVITES,
 } from "@/lib/constants";
 import { deadlineLabel, formatDateTime, isPast } from "@/lib/utils/date";
 import type {
@@ -346,7 +347,7 @@ export default async function TeamPage({
         ? supabase
             .from("team_invites")
             .select(
-              "id, team_id, inviter_id, invitee_id, status, created_at, invitee:profiles!team_invites_invitee_id_fkey(id, full_name, email, avatar_url)",
+              "id, team_id, inviter_id, invitee_id, status, created_at, expires_at, invitee:profiles!team_invites_invitee_id_fkey(id, full_name, email, avatar_url)",
             )
             .eq("team_id", team.id)
             .order("created_at", { ascending: false })
@@ -356,6 +357,9 @@ export default async function TeamPage({
     ]);
 
   const roster = members ?? [];
+  const activePendingInvites = (invites ?? []).filter(
+    (invite) => invite.status === "pending" && !isPast(invite.expires_at),
+  ).length;
   const memberCount = roster.length;
   const leader = roster.find((member) => member.role === "leader")?.profile;
   const developerCount = roster.filter(
@@ -596,9 +600,20 @@ export default async function TeamPage({
 
           {isLeader ? (
             <Card className="p-6">
-              <h2 className="text-lg font-medium text-on-surface">
-                Lời mời đã gửi
-              </h2>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-lg font-medium text-on-surface">
+                  Lời mời đã gửi
+                </h2>
+                <Badge
+                  tone={
+                    activePendingInvites >= MAX_PENDING_INVITES
+                      ? "warning"
+                      : "neutral"
+                  }
+                >
+                  {activePendingInvites}/{MAX_PENDING_INVITES} đang chờ
+                </Badge>
+              </div>
               {invites && invites.length > 0 ? (
                 <ul className="mt-4 divide-y divide-outline-variant">
                   {invites.map((invite) => {

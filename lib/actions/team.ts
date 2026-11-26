@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/require-user";
 import { publicEnv } from "@/lib/env";
-import { INVITE_LINK_DAYS } from "@/lib/constants";
+import {
+  INVITE_LINK_DAYS,
+  MAX_PENDING_INVITES,
+  MAX_PENDING_JOIN_REQUESTS,
+} from "@/lib/constants";
 import { hashInviteToken } from "@/lib/invite-token";
 import { createTeamSchema, messageSchema, uuidSchema } from "@/lib/validation/team";
 import { isPast } from "@/lib/utils/date";
@@ -73,6 +77,14 @@ function teamMutationMessage(
     return "Đội đang tạm dừng tuyển.";
   }
 
+  if (message.includes("Too many pending join requests")) {
+    return `Bạn đã có ${MAX_PENDING_JOIN_REQUESTS} đơn đang chờ duyệt. Huỷ bớt hoặc đợi phản hồi trước khi gửi thêm.`;
+  }
+
+  if (message.includes("Too many pending invites")) {
+    return `Bạn đã gửi ${MAX_PENDING_INVITES} lời mời đang chờ phản hồi. Huỷ bớt hoặc đợi phản hồi trước khi mời thêm.`;
+  }
+
   if (message.includes("full team needs at least 1")) {
     return "Đội đủ người cần có ít nhất 1 thành viên Marcom/Operation.";
   }
@@ -123,6 +135,7 @@ export async function createTeamAction(
   revalidatePath("/team");
   revalidatePath("/teams");
   revalidatePath("/participants");
+  revalidatePath("/overview");
   redirect("/team");
 }
 
@@ -154,6 +167,7 @@ export async function requestJoinTeamAction(formData: FormData) {
 
   revalidatePath("/teams");
   revalidatePath("/team");
+  revalidatePath("/overview");
   back("/teams", "ok", "Đã gửi đơn xin vào đội.");
 }
 
@@ -220,6 +234,7 @@ export async function leaveTeamAction(formData: FormData) {
   revalidatePath("/team");
   revalidatePath("/teams");
   revalidatePath("/participants");
+  revalidatePath("/overview");
   back("/team", "ok", "Thao tác đã hoàn tất.");
 }
 
@@ -241,6 +256,7 @@ export async function transferLeadershipAction(formData: FormData) {
   if (error) back("/team", "error", "Không chuyển được đội trưởng.");
 
   revalidatePath("/team");
+  revalidatePath("/overview");
   back("/team", "ok", "Thao tác đã hoàn tất.");
 }
 
@@ -396,6 +412,7 @@ export async function joinWithLinkAction(formData: FormData) {
   revalidatePath("/team");
   revalidatePath("/teams");
   revalidatePath("/participants");
+  revalidatePath("/overview");
   redirect("/team?joined=1");
 }
 
@@ -474,6 +491,7 @@ export async function cancelJoinRequestAction(formData: FormData) {
 
   revalidatePath("/teams");
   revalidatePath("/team");
+  revalidatePath("/overview");
   back("/teams", "ok", "Đã hủy đơn xin vào đội.");
 }
 

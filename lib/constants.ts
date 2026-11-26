@@ -80,4 +80,7 @@ export const SKILL_LEVEL_LABEL: Record<number, string> = {
 
 export const MAX_PROFILE_SKILLS = 5;
 
+export const MAX_PENDING_JOIN_REQUESTS = 5;
+export const MAX_PENDING_INVITES = 5;
+
 export const INVITE_LINK_DAYS = 7;

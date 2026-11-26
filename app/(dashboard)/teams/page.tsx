@@ -20,6 +20,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FlashToast } from "@/components/flash-toast";
+import { MAX_PENDING_JOIN_REQUESTS } from "@/lib/constants";
 import { formatDateTime } from "@/lib/utils/date";
 import type { Profile, TeamStatus } from "@/types/db";
 
@@ -145,6 +146,11 @@ export default async function TeamsPage({
       .filter((request) => request.status === "pending")
       .map((request) => [request.team_id, request.id]),
   );
+  const pendingJoinCount = pendingRequestByTeam.size;
+  const joinQuotaLeft = Math.max(
+    0,
+    MAX_PENDING_JOIN_REQUESTS - pendingJoinCount,
+  );
 
   return (
     <div className="space-y-6">
@@ -161,6 +167,16 @@ export default async function TeamsPage({
           Marcom/Operation.
         </p>
       </header>
+
+      {!membership && joinQuotaLeft === 0 ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl bg-warning-container p-4 text-sm text-on-warning-container">
+          <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+          <span>
+            Bạn đã có {MAX_PENDING_JOIN_REQUESTS} đơn đang chờ duyệt. Huỷ bớt
+            hoặc đợi phản hồi trước khi gửi thêm.
+          </span>
+        </div>
+      ) : null}
 
       {!profileReady ? (
         <div className="flex flex-wrap items-center gap-3 rounded-xl bg-warning-container p-4 text-sm text-on-warning-container">
@@ -430,6 +446,11 @@ export default async function TeamsPage({
                         hồ sơ
                       </Link>{" "}
                       trước khi gửi đơn.
+                    </p>
+                  ) : joinQuotaLeft === 0 ? (
+                    <p className="rounded-xl bg-surface-container px-3 py-2 text-xs leading-5 text-on-surface-variant">
+                      Bạn đã đạt {MAX_PENDING_JOIN_REQUESTS} đơn chờ duyệt. Huỷ
+                      bớt một đơn để gửi đơn mới.
                     </p>
                   ) : (
                     <form action={requestJoinTeamAction} className="space-y-2">
