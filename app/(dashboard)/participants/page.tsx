@@ -1,21 +1,9 @@
-import {
-  AlertCircle,
-  CheckCircle2,
-  Mail,
-  UserPlus,
-  Users,
-  UsersRound,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, Users, UsersRound } from "lucide-react";
 import { requireUser } from "@/lib/auth/require-user";
-import { inviteToTeamAction } from "@/lib/actions/team";
-import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { ParticipantCard } from "@/components/participant-card";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { SkillBar } from "@/components/ui/skill-bar";
-import { SubmitButton } from "@/components/ui/submit-button";
 import { FlashToast } from "@/components/flash-toast";
-import { DEPARTMENT_OPTIONS } from "@/lib/constants";
 import type { ProfileWithSkills, TeamStatus } from "@/types/db";
 
 
@@ -145,113 +133,14 @@ export default async function ParticipantsPage({
 
       {candidates.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
-          {candidates.map((profile) => {
-            const skills = (profile.profile_skills ?? []).filter(
-              (item) => item.skill,
-            );
-            const department = DEPARTMENT_OPTIONS.find(
-              (option) => option.value === profile.department,
-            );
-            const area = department?.areas.find(
-              (item) => item.value === profile.subteam,
-            );
-            const alreadyInvited = invited.has(profile.id);
-            const canInvite = Boolean(team && isLeader && !teamFull);
-
-            return (
-              <Card key={profile.id} className="flex flex-col p-6">
-                <div className="flex items-start gap-3">
-                  <Avatar
-                    src={profile.avatar_url}
-                    name={profile.full_name}
-                    size={48}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <h2 className="truncate text-base font-medium text-on-surface">
-                      {profile.full_name}
-                    </h2>
-                    <p className="truncate text-xs text-on-surface-variant">
-                      {profile.email}
-                    </p>
-                    <p className="mt-0.5 line-clamp-2 text-sm leading-6 text-on-surface-variant">
-                      {profile.headline || "Chưa có headline."}
-                    </p>
-                    <p className="mt-1 text-xs text-on-surface-variant">
-                      {[profile.major, profile.cohort, profile.student_id]
-                        .filter(Boolean)
-                        .join(" · ") || "Chưa cập nhật thông tin"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {department ? (
-                    <Badge tone="primary">{department.label}</Badge>
-                  ) : (
-                    <Badge tone="warning">Chưa chọn ban</Badge>
-                  )}
-                  {area ? <Badge tone="neutral">{area.label}</Badge> : null}
-                </div>
-
-                {skills.length > 0 ? (
-                  <div className="mt-4">
-                    <p className="text-xs font-medium text-on-surface-variant">
-                      Kỹ năng
-                    </p>
-                    <div className="mt-2 space-y-3">
-                      {skills.slice(0, 5).map((item) => (
-                        <SkillBar
-                          key={item.skill_id}
-                          name={item.skill?.name ?? "Kỹ năng"}
-                          level={item.level}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="mt-4 text-sm text-on-surface-variant">
-                    Chưa chọn kỹ năng.
-                  </p>
-                )}
-
-                {profile.bio ? (
-                  <p className="mt-4 line-clamp-3 text-sm leading-6 text-on-surface-variant">
-                    {profile.bio}
-                  </p>
-                ) : null}
-
-                <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-outline-variant pt-4">
-                  {profile.facebook_url || profile.github_url ? (
-                    <span className="flex items-center gap-2 text-xs text-on-surface-variant">
-                      <Mail className="h-3.5 w-3.5" aria-hidden />
-                      Liên hệ qua hồ sơ
-                    </span>
-                  ) : null}
-
-                  {alreadyInvited ? (
-                    <Badge tone="warning" className="ml-auto">
-                      Đã mời
-                    </Badge>
-                  ) : canInvite ? (
-                    <form action={inviteToTeamAction} className="ml-auto">
-                      <input
-                        type="hidden"
-                        name="invitee_id"
-                        value={profile.id}
-                      />
-                      <SubmitButton
-                        size="sm"
-                        pendingText="Đang mời…"
-                      >
-                        <UserPlus className="h-4 w-4" aria-hidden />
-                        Mời vào đội
-                      </SubmitButton>
-                    </form>
-                  ) : null}
-                </div>
-              </Card>
-            );
-          })}
+          {candidates.map((profile) => (
+            <ParticipantCard
+              key={profile.id}
+              profile={profile}
+              alreadyInvited={invited.has(profile.id)}
+              canInvite={Boolean(team && isLeader && !teamFull)}
+            />
+          ))}
         </div>
       ) : (
         <EmptyState
