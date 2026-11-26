@@ -5,33 +5,55 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Pagination } from "@/components/ui/pagination";
 import { FlashToast } from "@/components/flash-toast";
-import { resolvePage } from "@/lib/utils/pagination";
+import { DEPARTMENT_LABEL, SUBTEAM_LABEL } from "@/lib/constants";
+import { buildPageHref, resolvePage } from "@/lib/utils/pagination";
 import { ilikePattern, searchTerm } from "@/lib/utils/search";
 import type { AdminProfile } from "@/types/admin";
+import type { Department } from "@/types/db";
 
 export const metadata: Metadata = { title: "Thí sinh" };
 
 const PAGE_SIZE = 25;
 
+const DEPARTMENTS: Department[] = ["developer", "marcom", "operation"];
+
 export default async function AdminParticipantsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string; ok?: string; error?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    department?: string;
+    page?: string;
+    ok?: string;
+    error?: string;
+  }>;
 }) {
   const { supabase } = await requireAdmin();
   const params = await searchParams;
   const q = searchTerm(params.q);
+  const departmentFilter = DEPARTMENTS.includes(
+    params.department as Department,
+  )
+    ? (params.department as Department)
+    : undefined;
   const filter = q
     ? `full_name.ilike."${ilikePattern(q)}",email.ilike."${ilikePattern(q)}",student_id.ilike."${ilikePattern(q)}"`
     : null;
 
   let countQuery = supabase
     .from("profiles")
-    .select("*", { count: "exact", head: true });
+    .select("*", { count: "exact", head: true })
+    .neq("role", "admin");
   let dataQuery = supabase
     .from("profiles")
     .select("*, team_members(team:teams(name))")
+    .neq("role", "admin")
     .order("full_name", { ascending: true });
+
+  if (departmentFilter) {
+    countQuery = countQuery.eq("department", departmentFilter);
+    dataQuery = dataQuery.eq("department", departmentFilter);
+  }
 
   if (filter) {
     countQuery = countQuery.or(filter);
@@ -46,13 +68,12 @@ export default async function AdminParticipantsPage({
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
     .returns<AdminProfile[]>();
 
-  const pageHref = (target: number) => {
-    const search = new URLSearchParams();
-    if (q) search.set("q", q);
-    if (target > 1) search.set("page", String(target));
-    const query = search.toString();
-    return `/admin/participants${query ? `?${query}` : ""}`;
-  };
+  const pageHref = (target: number) =>
+    buildPageHref(
+      "/admin/participants",
+      { q, department: departmentFilter },
+      target,
+    );
 
   return (
     <div className="space-y-6">
@@ -70,6 +91,20 @@ export default async function AdminParticipantsPage({
         q={q}
         placeholder="Tìm theo tên, email hoặc MSSV"
         clearHref="/admin/participants"
+        filters={[
+          {
+            name: "department",
+            label: "Ban",
+            value: departmentFilter ?? "",
+            options: [
+              { value: "", label: "Tất cả ban" },
+              ...DEPARTMENTS.map((department) => ({
+                value: department,
+                label: DEPARTMENT_LABEL[department],
+              })),
+            ],
+          },
+        ]}
       />
 
       <Card className="overflow-hidden">
@@ -85,8 +120,9 @@ export default async function AdminParticipantsPage({
                 <tr className="border-b border-outline-variant bg-surface-container/60 text-left text-xs text-on-surface-variant">
                   <th scope="col" className="px-5 py-3 font-medium">Thí sinh</th>
                   <th scope="col" className="px-5 py-3 font-medium">MSSV</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Ban</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Mảng</th>
                   <th scope="col" className="px-5 py-3 font-medium">Ngành / Khóa</th>
-                  <th scope="col" className="px-5 py-3 font-medium">Role</th>
                   <th scope="col" className="px-5 py-3 font-medium">Đội</th>
                   <th scope="col" className="px-5 py-3 font-medium">Tìm đội</th>
                 </tr>
@@ -112,18 +148,17 @@ export default async function AdminParticipantsPage({
                         {profile.student_id ?? "—"}
                       </td>
                       <td className="px-5 py-3 text-on-surface-variant">
+                        {profile.department
+                          ? DEPARTMENT_LABEL[profile.department]
+                          : "—"}
+                      </td>
+                      <td className="px-5 py-3 text-on-surface-variant">
+                        {profile.subteam ? SUBTEAM_LABEL[profile.subteam] : "—"}
+                      </td>
+                      <td className="px-5 py-3 text-on-surface-variant">
                         {[profile.major, profile.cohort]
                           .filter(Boolean)
                           .join(" · ") || "—"}
-                      </td>
-                      <td className="px-5 py-3">
-                        <Badge
-                          tone={
-                            profile.role === "admin" ? "primary" : "neutral"
-                          }
-                        >
-                          {profile.role === "admin" ? "BTC" : "Thí sinh"}
-                        </Badge>
                       </td>
                       <td className="px-5 py-3 text-on-surface">{teamName}</td>
                       <td className="px-5 py-3">

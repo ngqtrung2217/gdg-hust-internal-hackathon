@@ -9,11 +9,11 @@ export type AdminTeam = {
   code: string;
   created_at: string;
   leader_id: string;
-  leader: Pick<Profile, "full_name"> | null;
+  leader: Pick<Profile, "full_name" | "email"> | null;
   team_members: {
     user_id: string;
     role: "leader" | "member";
-    profile: { full_name: string } | null;
+    profile: { full_name: string; email: string } | null;
   }[];
 };
 
