@@ -34,6 +34,15 @@ type FormationSettings = Pick<
   "team_creation_deadline" | "teams_locked"
 >;
 
+const RETURN_PATHS = new Set(["/team", "/overview"]);
+
+function returnPath(formData: FormData, fallback: string) {
+  const value = formData.get("return_to");
+  return typeof value === "string" && RETURN_PATHS.has(value)
+    ? value
+    : fallback;
+}
+
 function back(path: string, kind: "error" | "ok", message?: string): never {
   const suffix =
     kind === "error"
@@ -150,9 +159,10 @@ export async function requestJoinTeamAction(formData: FormData) {
 
 export async function approveJoinRequestAction(formData: FormData) {
   const { supabase } = await requireUser();
+  const path = returnPath(formData, "/team");
 
   const requestId = uuidSchema.safeParse(formData.get("request_id"));
-  if (!requestId.success) back("/team", "error", "Đơn không hợp lệ.");
+  if (!requestId.success) back(path, "error", "Đơn không hợp lệ.");
 
   const { error } = await supabase.rpc("approve_join_request", {
     p_request_id: requestId.data,
@@ -160,7 +170,7 @@ export async function approveJoinRequestAction(formData: FormData) {
 
   if (error) {
     back(
-      "/team",
+      path,
       "error",
       teamMutationMessage(
         error,
@@ -171,23 +181,26 @@ export async function approveJoinRequestAction(formData: FormData) {
 
   revalidatePath("/team");
   revalidatePath("/teams");
-  back("/team", "ok", "Thao tác đã hoàn tất.");
+  revalidatePath("/overview");
+  back(path, "ok", "Thao tác đã hoàn tất.");
 }
 
 export async function rejectJoinRequestAction(formData: FormData) {
   const { supabase } = await requireUser();
+  const path = returnPath(formData, "/team");
 
   const requestId = uuidSchema.safeParse(formData.get("request_id"));
-  if (!requestId.success) back("/team", "error", "Đơn không hợp lệ.");
+  if (!requestId.success) back(path, "error", "Đơn không hợp lệ.");
 
   const { error } = await supabase.rpc("reject_join_request", {
     p_request_id: requestId.data,
   });
 
-  if (error) back("/team", "error", "Không từ chối được đơn.");
+  if (error) back(path, "error", "Không từ chối được đơn.");
 
   revalidatePath("/team");
-  back("/team", "ok", "Thao tác đã hoàn tất.");
+  revalidatePath("/overview");
+  back(path, "ok", "Thao tác đã hoàn tất.");
 }
 
 export async function leaveTeamAction(formData: FormData) {
@@ -388,12 +401,13 @@ export async function joinWithLinkAction(formData: FormData) {
 
 export async function respondToInviteAction(formData: FormData) {
   const { supabase } = await requireUser();
+  const path = returnPath(formData, "/team");
 
   const inviteId = uuidSchema.safeParse(formData.get("invite_id"));
   const accept = formData.get("accept") === "true";
 
   if (!inviteId.success) {
-    back("/team", "error", "Lời mời không hợp lệ.");
+    back(path, "error", "Lời mời không hợp lệ.");
   }
 
   const { error } = await supabase.rpc("respond_to_invite", {
@@ -403,7 +417,7 @@ export async function respondToInviteAction(formData: FormData) {
 
   if (error) {
     back(
-      "/team",
+      path,
       "error",
       accept
         ? teamMutationMessage(
@@ -417,7 +431,8 @@ export async function respondToInviteAction(formData: FormData) {
   revalidatePath("/team");
   revalidatePath("/teams");
   revalidatePath("/participants");
-  back("/team", "ok", "Thao tác đã hoàn tất.");
+  revalidatePath("/overview");
+  back(path, "ok", "Thao tác đã hoàn tất.");
 }
 
 export async function cancelInviteAction(formData: FormData) {
