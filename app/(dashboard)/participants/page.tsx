@@ -27,6 +27,7 @@ type Membership = {
     name: string;
     max_members: number;
     status: TeamStatus;
+    team_members: { count: number }[];
   } | null;
 };
 
@@ -42,7 +43,9 @@ export default async function ParticipantsPage({
     await Promise.all([
       supabase
         .from("team_members")
-        .select("team_id, role, team:teams(id, name, max_members, status)")
+        .select(
+          "team_id, role, team:teams(id, name, max_members, status, team_members(count))",
+        )
         .eq("user_id", profileId)
         .limit(1)
         .returns<Membership[]>(),
@@ -81,14 +84,9 @@ export default async function ParticipantsPage({
 
   const invited = new Set((invites ?? []).map((row) => row.invitee_id));
 
-  const { count: teamCount } = team
-    ? await supabase
-        .from("team_members")
-        .select("*", { count: "exact", head: true })
-        .eq("team_id", team.id)
-    : { count: 0 };
+  const teamCount = team?.team_members?.[0]?.count ?? 0;
 
-  const teamFull = team ? (teamCount ?? 0) >= team.max_members : false;
+  const teamFull = team ? teamCount >= team.max_members : false;
 
   return (
     <div className="space-y-6">

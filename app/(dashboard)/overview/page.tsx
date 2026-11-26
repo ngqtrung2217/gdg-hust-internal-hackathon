@@ -25,6 +25,7 @@ type Membership = {
     name: string;
     status: TeamStatus;
     max_members: number;
+    team_members: { count: number }[];
   } | null;
 };
 
@@ -48,7 +49,9 @@ export default async function OverviewPage() {
         .returns<Announcement[]>(),
       supabase
         .from("team_members")
-        .select("team_id, role, team:teams(id, name, status, max_members)")
+        .select(
+          "team_id, role, team:teams(id, name, status, max_members, team_members(count))",
+        )
         .eq("user_id", profileId)
         .limit(1)
         .returns<Membership[]>(),
@@ -58,12 +61,7 @@ export default async function OverviewPage() {
   const membership = memberships?.[0];
   const team = membership?.team;
 
-  const { count: memberCount } = team
-    ? await supabase
-        .from("team_members")
-        .select("*", { count: "exact", head: true })
-        .eq("team_id", team.id)
-    : { count: 0 };
+  const memberCount = team?.team_members?.[0]?.count ?? 0;
 
   return (
     <div className="space-y-8">

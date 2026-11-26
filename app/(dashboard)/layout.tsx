@@ -13,12 +13,15 @@ export default async function DashboardLayout({
 }) {
   const { supabase, profileId } = await requireUser();
 
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", profileId)
-    .limit(1)
-    .returns<Profile[]>();
+  const [{ data: profiles }, { data: isAdmin }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", profileId)
+      .limit(1)
+      .returns<Profile[]>(),
+    supabase.rpc("is_admin"),
+  ]);
 
   const profile = profiles?.[0];
 
@@ -40,8 +43,6 @@ export default async function DashboardLayout({
       </main>
     );
   }
-
-  const { data: isAdmin } = await supabase.rpc("is_admin");
 
   return (
     <AppShell profile={profile} isAdmin={Boolean(isAdmin)}>

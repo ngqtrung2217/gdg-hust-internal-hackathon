@@ -27,6 +27,10 @@ export function Avatar({
           alt={name ?? "Ảnh đại diện"}
           width={size}
           height={size}
+          // Google already serves small, cached avatars. Proxying dozens of
+          // them through the Next image optimizer on /participants made the
+          // list feel slow, so load them directly.
+          unoptimized
           className="h-full w-full object-cover"
           referrerPolicy="no-referrer"
         />
